@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>台灣彩券 · 威力彩歷史獎號與數據儀表板</title>
+  <meta name="description" content="全自動抓取與下載台灣彩券威力彩各期開獎紀錄、球號統計、獎金分佈與歷史數據匯出。">
+  <!-- Google Fonts: Inter & Outfit & Noto Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0c12;
+      --bg-card: rgba(22, 27, 38, 0.75);
+      --bg-card-hover: rgba(30, 36, 50, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(245, 158, 11, 0.35);
+      
+      --gold-primary: #f59e0b;
+      --gold-light: #fde68a;
+      --gold-gradient: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+      
+      --red-primary: #ef4444;
+      --red-light: #fca5a5;
+      --red-gradient: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+      
+      --emerald-primary: #10b981;
+      --blue-primary: #3b82f6;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(245, 158, 11, 0.07) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(239, 68, 68, 0.06) 0%, transparent 40%);
+      color: var(--text-main);
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* 頂部導覽列 */
+    header {
+      backdrop-filter: blur(16px);
+      background: rgba(10, 12, 18, 0.85);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--gold-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+      font-size: 24px;
+    }
+
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #ffffff, #fde68a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-badge {
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--gold-primary);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      outline: none;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--gold-gradient);
+      color: #000;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-success {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .btn-success:hover {
+      background: rgba(16, 185, 129, 0.25);
+      transform: translateY(-2px);
+    }
+
+    /* 主要容器 */
+    main {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 30px 24px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* 精選展示卡片 (Showcase Hero) */
+    .hero-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 28px 36px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--gold-primary), var(--red-primary), var(--emerald-primary));
+    }
+
+    .hero-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .hero-meta-title {
+      font-size: 0.85rem;
+      color: var(--gold-primary);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+
+    .hero-period {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .hero-date {
+      font-size: 1rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .hero-jackpot-badge {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 8px 18px;
+      border-radius: 12px;
+      text-align: right;
+    }
+
+    .hero-jackpot-label {
+      font-size: 0.8rem;
+      color: var(--red-light);
+      font-weight: 600;
+    }
+
+    .hero-jackpot-amount {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    /* 球號列與 3D 效果 */
+    .balls-section {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 32px;
+      padding: 16px 0;
+    }
+
+    .balls-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .group-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .balls-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* 3D 擬真彩球樣式 */
+    .lotto-ball {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #ffffff;
+      position: relative;
+      user-select: none;
+      box-shadow: 
+        0 8px 18px -4px rgba(0, 0, 0, 0.6),
+        inset -4px -6px 12px rgba(0, 0, 0, 0.5),
+        inset 4px 6px 10px rgba(255, 255, 255, 0.5);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .lotto-ball:hover {
+      transform: scale(1.15) translateY(-4px);
+    }
+
+    .ball-gold {
+      background: radial-gradient(circle at 35% 30%, #fef08a 0%, #f59e0b 50%, #92400e 100%);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+
+    .ball-red {
+      background: radial-gradient(circle at 35% 30%, #fca5a5 0%, #ef4444 50%, #7f1d1d 100%);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    }
+
+    .ball-separator {
+      font-size: 1.8rem;
+      color: var(--text-muted);
+      font-weight: 300;
+      margin: 0 4px;
+    }
+
+    /* KPI 統計卡片網格 */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.25s ease;
+    }
+
+    .kpi-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .kpi-title {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .kpi-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .kpi-sub {
+      font-size: 0.78rem;
+      color: var(--emerald-primary);
+    }
+
+    /* 工具列與篩選器 */
+    .filter-section {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 18px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .filter-left {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .search-box {
+      position: relative;
+      min-width: 260px;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: rgba(10, 12, 18, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 8px 14px 8px 36px;
+      color: var(--text-main);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-box input:focus {
+      border-color: var(--gold-primary);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .year-pills {
+      display: flex;
+      gap: 8px;
+    }
+
+    .pill {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .pill:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .pill.active {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--gold-primary);
+      border-color: rgba(245, 158, 11, 0.4);
+    }
+
+    /* 號碼熱度統計圖區塊 */
+    .frequency-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 22px 28px;
+    }
+
+    .freq-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .freq-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .freq-bars-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+      gap: 10px;
+    }
+
+    .freq-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 8px 4px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .freq-item:hover, .freq-item.selected {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: var(--gold-primary);
+      transform: translateY(-2px);
+    }
+
+    .freq-num {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--gold-light);
+    }
+
+    .freq-count {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* 資料表格 */
+    .table-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+    }
+
+    .table-container {
+      max-height: 540px;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    thead th {
+      background: rgba(20, 24, 34, 0.95);
+      color: var(--gold-primary);
+      padding: 14px 18px;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    tbody tr:hover {
+      background: rgba(245, 158, 11, 0.05);
+    }
+
+    tbody tr.active-row {
+      background: rgba(245, 158, 11, 0.12);
+      border-left: 3px solid var(--gold-primary);
+    }
+
+    tbody td {
+      padding: 12px 18px;
+      white-space: nowrap;
+    }
+
+    .cell-period {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .mini-balls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mini-ball {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    /* 彈出視窗 Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #181c26;
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 28px;
+      width: 90%;
+      max-width: 480px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .modal-body {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .year-select-list {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .year-btn {
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      text-align: center;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .year-btn:hover {
+      background: var(--gold-primary);
+      color: #000;
+    }
+
+    /* 滾動條美化 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* 🤖 Google OR-Tools AI 專案樣式 */
+    .btn-ai-nav {
+      background: linear-gradient(135deg, #f59e0b 0%, #ec4899 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+      font-weight: 700;
+    }
+    .btn-ai-nav:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(236, 72, 153, 0.5);
+    }
+
+    .ai-card {
+      margin: 28px 0;
+      background: linear-gradient(145deg, rgba(20, 25, 38, 0.85) 0%, rgba(13, 16, 25, 0.95) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 20px;
+      padding: 26px 30px;
+      box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.7), 0 0 30px rgba(245, 158, 11, 0.08);
+      backdrop-filter: blur(16px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ai-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #f59e0b, #ec4899, #3b82f6, #10b981);
+    }
+
+    .ai-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 18px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .ai-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .ai-robot-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #f59e0b, #ec4899);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 4px 18px rgba(245, 158, 11, 0.4);
+      animation: floatBadge 3s ease-in-out infinite;
+    }
+
+    @keyframes floatBadge {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .ai-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      background: linear-gradient(90deg, #ffffff, #fde68a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .ai-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .ai-engine-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .engine-badge-green {
+      border-color: rgba(16, 185, 129, 0.4) !important;
+      color: #34d399 !important;
+      background: rgba(16, 185, 129, 0.12) !important;
+    }
+
+    .engine-badge-yellow {
+      border-color: rgba(245, 158, 11, 0.4) !important;
+      color: #fbbf24 !important;
+      background: rgba(245, 158, 11, 0.12) !important;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .ai-body-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 24px;
+    }
+
+    .ai-controls-panel {
+      background: rgba(10, 13, 20, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .panel-section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--gold-primary);
+      margin-bottom: 2px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-label {
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .ticket-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .t-pill {
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      transition: all 0.2s;
+    }
+
+    .t-pill:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+
+    .t-pill.active {
+      background: var(--gold-gradient);
+      color: #000000;
+      border-color: var(--gold-primary);
+      box-shadow: 0 2px 10px rgba(245, 158, 11, 0.3);
+    }
+
+    .control-input, .control-select {
+      background: rgba(18, 22, 32, 0.8);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 8px 12px;
+      color: var(--text-main);
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    .control-input:focus, .control-select:focus {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+    }
+
+    .control-input.mini {
+      width: 80px;
+      text-align: center;
+    }
+
+    .range-inputs {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .range-hint {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .switch-group {
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .switch-label {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .switch-label input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: .3s;
+      border-radius: 22px;
+    }
+
+    .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    .switch-label input:checked + .switch-slider {
+      background: var(--gold-gradient);
+    }
+
+    .switch-label input:checked + .switch-slider:before {
+      transform: translateX(18px);
+    }
+
+    .switch-text {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    .btn-ai-solve {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+      color: #000000;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 18px rgba(245, 158, 11, 0.4);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-top: 4px;
+    }
+
+    .btn-ai-solve:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(245, 158, 11, 0.6);
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    }
+
+    .btn-ai-solve:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .ai-feature-summary {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.82rem;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: auto;
+    }
+
+    .summary-title {
+      font-weight: 700;
+      color: var(--gold-primary);
+      margin-bottom: 2px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+    }
+
+    .highlight-gold {
+      color: #fbbf24;
+      font-weight: 600;
+    }
+
+    .highlight-red {
+      color: #f87171;
+      font-weight: 600;
+    }
+
+    /* 右側結果面板 */
+    .ai-results-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .results-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .results-subtitle {
+      font-size: 0.8rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .results-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tickets-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 520px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .ticket-card {
+      background: rgba(20, 24, 34, 0.7);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 16px 20px;
+      transition: all 0.25s ease;
+      animation: fadeInTicket 0.4s ease forwards;
+    }
+
+    @keyframes fadeInTicket {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .ticket-card:hover {
+      border-color: rgba(245, 158, 11, 0.4);
+      background: rgba(28, 33, 46, 0.85);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.6);
+    }
+
+    .ticket-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .ticket-meta-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ticket-badge-num {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--gold-primary);
+    }
+
+    .ticket-score-badge {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .ticket-metrics {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 12px;
+    }
+
+    .ticket-balls-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .ticket-balls-z1 {
+      display: flex;
+      gap: 8px;
+    }
+
+    .ai-ball {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s ease;
+    }
+
+    .ai-ball:hover {
+      transform: scale(1.1);
+    }
+
+    .ticket-reasons-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .reason-pill {
+      font-size: 0.76rem;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(245, 158, 11, 0.1);
+      color: #fde68a;
+      border: 1px solid rgba(245, 158, 11, 0.22);
+    }
+
+    .btn-copy-ticket {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-copy-ticket:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    /* 吐司通知 Toast */
+    .toast-notify {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(16, 22, 34, 0.95);
+      color: #ffffff;
+      border: 1px solid var(--gold-primary);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(245, 158, 11, 0.3);
+      padding: 12px 22px;
+      border-radius: 12px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      z-index: 300;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+
+    .toast-notify.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* 響應式佈局調整 */
+    @media (max-width: 900px) {
+      .ai-body-grid {
+        grid-template-columns: 1fr;
+      }
+      .ai-ball {
+        width: 36px;
+        height: 36px;
+        font-size: 0.95rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      header {
+        padding: 12px 16px;
+      }
+      .brand-title {
+        font-size: 1.1rem;
+      }
+      .hero-card {
+        padding: 20px;
+      }
+      .hero-period {
+        font-size: 1.6rem;
+      }
+      .lotto-ball {
+        width: 42px;
+        height: 42px;
+        font-size: 1.1rem;
+      }
+      .filter-section {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .search-box {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部導航 -->
+  <header>
+    <div class="brand-group">
+      <div class="brand-logo">🎱</div>
+      <div>
+        <div class="brand-title">台灣彩券 · 威力彩歷史儀表板</div>
+      </div>
+      <span class="brand-badge">第 5 屆官方連線</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ai-nav" onclick="scrollToAiSection()">
+        <span>🤖</span> Google OR 運籌預測
+      </button>
+      <button class="btn btn-secondary" id="btnSync" onclick="triggerSync()">
+        <span>🔄</span> 同步最新獎號
+      </button>
+      <button class="btn btn-primary" onclick="downloadCsv()">
+        <span>📊</span> 匯出 CSV
+      </button>
+      <button class="btn btn-success" onclick="openZipModal()">
+        <span>📦</span> 官方歷年總檔 (ZIP)
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 精選看板 (Showcase Hero) -->
+    <section class="hero-card" id="heroCard">
+      <div class="hero-header">
+        <div>
+          <div class="hero-meta-title">SELECTED DRAW RESULT</div>
+          <div class="hero-period" id="heroPeriod">
+            第 <span id="valPeriod">--</span> 期
+            <span class="hero-date" id="valDate">開獎日期: ----/--/--</span>
+          </div>
+        </div>
+        <div class="hero-jackpot-badge">
+          <div class="hero-jackpot-label">頭獎派彩狀況</div>
+          <div class="hero-jackpot-amount" id="valJackpot">載入中...</div>
+        </div>
+      </div>
+
+      <!-- 開獎球號 -->
+      <div class="balls-section">
+        <div class="balls-group">
+          <div class="group-label">
+            <span>🟡 第一區獎號 (開出順序)</span>
+          </div>
+          <div class="balls-row" id="zone1Row">
+            <div class="lotto-ball ball-gold">--</div>
+            <div class="lotto-ball ball-gold">--</div>
+            <div class="lotto-ball ball-gold">--</div>
+            <div class="lotto-ball ball-gold">--</div>
+            <div class="lotto-ball ball-gold">--</div>
+            <div class="lotto-ball ball-gold">--</div>
+          </div>
+        </div>
+
+        <div class="ball-separator">+</div>
+
+        <div class="balls-group">
+          <div class="group-label">
+            <span>🔴 第二區特別號</span>
+          </div>
+          <div class="balls-row">
+            <div class="lotto-ball ball-red" id="zone2Ball">--</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KPI 關鍵指標統計 -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">資料庫總期數</div>
+        <div class="kpi-value" id="kpiTotalCount">0</div>
+        <div class="kpi-sub">涵蓋第 5 屆全期開獎</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">頭獎送出總注數</div>
+        <div class="kpi-value" id="kpiJackpotWins">0</div>
+        <div class="kpi-sub">累計開出幸運頭獎</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">最高單注頭獎金額</div>
+        <div class="kpi-value" id="kpiMaxJackpot">$0</div>
+        <div class="kpi-sub" id="kpiMaxPeriod">--</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">第一區最熱門球號 Top 1</div>
+        <div class="kpi-value" id="kpiTopNumber" style="color: var(--gold-primary);">--</div>
+        <div class="kpi-sub" id="kpiTopCount">開出 0 次</div>
+      </div>
+    </section>
+
+    <!-- 🤖 Google OR-Tools AI 運籌最佳化推薦專區 -->
+    <section class="ai-card" id="aiSection">
+      <div class="ai-card-header">
+        <div class="ai-title-wrap">
+          <div class="ai-robot-badge">🤖</div>
+          <div>
+            <div class="ai-title">Google OR-Tools 運籌最佳化 · AI 智慧預測推薦</div>
+            <div class="ai-subtitle">利用 0-1 混合整數規劃 (CP-SAT)、歷史遺漏回補、共現親和矩陣與包牌覆蓋率最佳化</div>
+          </div>
+        </div>
+        <div class="ai-engine-status" id="aiEngineStatus" onclick="copyInstallCmd()">
+          <span class="status-dot"></span>
+          <span id="aiEngineLabel">檢測運籌求解引擎中...</span>
+        </div>
+      </div>
+
+      <div class="ai-body-grid">
+        <!-- 左側：運籌約束控制面板 -->
+        <div class="ai-controls-panel">
+          <div class="panel-section-title">
+            <span>⚙️ 運籌約束設定 (OR Constraints)</span>
+          </div>
+
+          <!-- 推薦注數 -->
+          <div class="control-group">
+            <label class="control-label">推薦注數 (Portfolio Size)</label>
+            <div class="ticket-pills" id="ticketPills">
+              <button type="button" class="t-pill" data-count="1" onclick="selectTicketCount(1)">1 注</button>
+              <button type="button" class="t-pill" data-count="3" onclick="selectTicketCount(3)">3 注</button>
+              <button type="button" class="t-pill active" data-count="5" onclick="selectTicketCount(5)">5 注 (包牌推薦)</button>
+              <button type="button" class="t-pill" data-count="8" onclick="selectTicketCount(8)">8 注</button>
+              <button type="button" class="t-pill" data-count="10" onclick="selectTicketCount(10)">10 注</button>
+            </div>
+          </div>
+
+          <!-- 必選膽碼 -->
+          <div class="control-group">
+            <label class="control-label" for="inputLocked">
+              📌 必選膽碼 (第一區，以逗號分隔，最多 5 個)
+            </label>
+            <input type="text" id="inputLocked" class="control-input" placeholder="例如: 3, 18, 25 (選填)">
+          </div>
+
+          <!-- 排除殺號 -->
+          <div class="control-group">
+            <label class="control-label" for="inputExcluded">
+              ❌ 排除殺號 (第一區，以逗號分隔)
+            </label>
+            <input type="text" id="inputExcluded" class="control-input" placeholder="例如: 4, 14 (選填)">
+          </div>
+
+          <!-- 第二區特別號 -->
+          <div class="control-group">
+            <label class="control-label" for="selectZ2">
+              🔴 第二區特別號指定
+            </label>
+            <select id="selectZ2" class="control-select">
+              <option value="">由 AI 潛力權重推薦 (輪轉平衡)</option>
+              <option value="1">指定 01 號</option>
+              <option value="2">指定 02 號</option>
+              <option value="3">指定 03 號</option>
+              <option value="4">指定 04 號</option>
+              <option value="5">指定 05 號</option>
+              <option value="6">指定 06 號</option>
+              <option value="7">指定 07 號</option>
+              <option value="8">指定 08 號</option>
+            </select>
+          </div>
+
+          <!-- 和值區間限制 -->
+          <div class="control-group">
+            <label class="control-label">和值黃金分佈區間 (Sum Range)</label>
+            <div class="range-inputs">
+              <input type="number" id="inputSumMin" class="control-input mini" value="85" min="21" max="222">
+              <span style="color: var(--text-muted); line-height: 38px;">~</span>
+              <input type="number" id="inputSumMax" class="control-input mini" value="155" min="21" max="222">
+              <span class="range-hint">常態 85~155</span>
+            </div>
+          </div>
+
+          <!-- 包牌多樣性互斥開關 -->
+          <div class="control-group switch-group">
+            <label class="switch-label">
+              <input type="checkbox" id="chkDiversity" checked>
+              <span class="switch-slider"></span>
+            </label>
+            <span class="switch-text">啟用多注多樣性互斥 (包牌重疊 ≤ 3 球)</span>
+          </div>
+
+          <!-- 啟動按鈕 -->
+          <button class="btn-ai-solve" id="btnAiSolve" onclick="triggerAiPredict()">
+            <span class="btn-solve-icon">⚡</span>
+            <span class="btn-solve-text" id="btnAiSolveText">啟動 AI 運籌最佳化求解</span>
+          </button>
+
+          <!-- 特徵速覽 -->
+          <div class="ai-feature-summary" id="aiFeatureSummary">
+            <div class="summary-title">📊 歷史特徵工程速報</div>
+            <div class="summary-row"><span>歷史分析樣本:</span><span id="aiStatDraws">載入中...</span></div>
+            <div class="summary-row"><span>常態平均和值:</span><span id="aiStatAvgSum">--</span></div>
+            <div class="summary-row"><span>第一區熱門號:</span><span id="aiStatHot" class="highlight-gold">--</span></div>
+            <div class="summary-row"><span>第二區熱門號:</span><span id="aiStatHotZ2" class="highlight-red">--</span></div>
+          </div>
+        </div>
+
+        <!-- 右側：AI 求解推薦注單 -->
+        <div class="ai-results-panel">
+          <div class="results-header">
+            <div class="results-title" id="resultsTitle">
+              <span>🎯 運籌推薦注單清單</span>
+              <span class="results-subtitle" id="resultsCountTag">共 5 注</span>
+            </div>
+            <div class="results-actions">
+              <button class="btn btn-secondary" onclick="triggerAiPredict()" title="重新求解">
+                <span>🔄</span> 重新運算
+              </button>
+              <button class="btn btn-primary" onclick="copyAllAiTickets()">
+                <span>📋</span> 複製全部注單
+              </button>
+            </div>
+          </div>
+
+          <!-- 推薦注單列表容器 -->
+          <div class="tickets-container" id="ticketsContainer">
+            <!-- JS 動態渲染注單卡片 -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 號碼開出頻率速覽 -->
+    <section class="frequency-card">
+      <div class="freq-header">
+        <div class="freq-title">🔥 第一區熱門號碼頻率排行 (點擊號碼可快速過濾)</div>
+        <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="resetFilter()">重設篩選</button>
+      </div>
+      <div class="freq-bars-container" id="freqContainer">
+        <!-- JS 動態生成 -->
+      </div>
+    </section>
+
+    <!-- 搜尋與過濾區 -->
+    <section class="filter-section">
+      <div class="filter-left">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="搜尋期別、日期或球號..." oninput="handleSearch()">
+        </div>
+        <div class="year-pills" id="yearPills">
+          <div class="pill active" onclick="filterByYear('all')">全期別</div>
+          <div class="pill" onclick="filterByYear('2026')">2026 (115年)</div>
+          <div class="pill" onclick="filterByYear('2025')">2025 (114年)</div>
+          <div class="pill" onclick="filterByYear('2024')">2024 (113年)</div>
+        </div>
+      </div>
+      <div style="font-size: 0.88rem; color: var(--text-muted);" id="filterCount">
+        顯示 0 筆資料
+      </div>
+    </section>
+
+    <!-- 歷史開獎紀錄表 -->
+    <section class="table-card">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>開獎期別</th>
+              <th>開獎日期</th>
+              <th>第一區獎號 (落球順序)</th>
+              <th>第一區 (大小順序)</th>
+              <th>第二區</th>
+              <th>頭獎注數</th>
+              <th>頭獎單注獎金</th>
+              <th>當期銷售額</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- JS 動態生成 -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- 官方歷年總檔 ZIP 下載 Modal -->
+  <div class="modal-backdrop" id="zipModal" onclick="closeZipModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="modal-title">📦 下載台彩官方歷年開獎總檔 (ZIP)</div>
+      <div class="modal-body">
+        點擊年份將直接從台彩官方 CDN 下載該年度所有彩券總表壓縮檔（支援民國 96 年至 113 年）：
+      </div>
+      <div class="year-select-list" id="zipYearList">
+        <!-- JS 動態生成年份按鈕 -->
+      </div>
+      <div style="text-align: right; margin-top: 10px;">
+        <button class="btn btn-secondary" onclick="closeZipModal()">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allRecords = [];
+    let displayedRecords = [];
+    let activeYear = 'all';
+    let selectedBallFilter = null;
+
+    // 頁面加載後抓取資料
+    window.addEventListener('DOMContentLoaded', async () => {
+      initZipModalYears();
+      await loadData();
+      await checkAiStatus();
+      await triggerAiPredict();
+    });
+
+    async function loadData() {
+      try {
+        const res = await fetch('/api/lottery');
+        if (!res.ok) throw new Error('API fetch failed');
+        allRecords = await res.json();
+        // 依照期別倒序
+        allRecords.sort((a, b) => b.period - a.period);
+        applyFilters();
+        updateKpisAndFrequency();
+        if (allRecords.length > 0) {
+          showRecordDetails(allRecords[0]);
+        }
+      } catch (err) {
+        console.error('載入失敗:', err);
+        alert('載入資料庫失敗，請確認伺服器運作正常！');
+      }
+    }
+
+    function updateKpisAndFrequency() {
+      const totalCount = allRecords.length;
+      document.getElementById('kpiTotalCount').innerText = totalCount.toLocaleString();
+
+      let jackpotWins = 0;
+      let maxJackpot = 0;
+      let maxPeriod = '';
+      const zone1Counts = {};
+
+      allRecords.forEach(r => {
+        const jp = r.super638JackpotAssign || {};
+        const win = jp.winnerCount || 0;
+        const prize = jp.perPrize || 0;
+        if (win > 0) {
+          jackpotWins += win;
+          if (prize > maxJackpot) {
+            maxJackpot = prize;
+            maxPeriod = `第 ${r.period} 期`;
+          }
+        }
+
+        const sizeBalls = r.drawNumberSize || [];
+        for (let i = 0; i < 6 && i < sizeBalls.length; i++) {
+          const b = sizeBalls[i];
+          zone1Counts[b] = (zone1Counts[b] || 0) + 1;
+        }
+      });
+
+      document.getElementById('kpiJackpotWins').innerText = jackpotWins.toLocaleString();
+      document.getElementById('kpiMaxJackpot').innerText = '$' + maxJackpot.toLocaleString();
+      document.getElementById('kpiMaxPeriod').innerText = maxPeriod ? `開出期別: ${maxPeriod}` : '尚無開出紀錄';
+
+      // 找出頻率最高前 15 名
+      const sortedFreq = Object.entries(zone1Counts)
+        .map(([num, count]) => ({ num: parseInt(num), count }))
+        .sort((a, b) => b.count - a.count);
+
+      if (sortedFreq.length > 0) {
+        document.getElementById('kpiTopNumber').innerText = `${sortedFreq[0].num < 10 ? '0' : ''}${sortedFreq[0].num}`;
+        document.getElementById('kpiTopCount').innerText = `開出 ${sortedFreq[0].count} 次`;
+      }
+
+      // 渲染頻率卡片
+      const freqContainer = document.getElementById('freqContainer');
+      freqContainer.innerHTML = '';
+      sortedFreq.slice(0, 16).forEach(item => {
+        const el = document.createElement('div');
+        el.className = `freq-item ${selectedBallFilter === item.num ? 'selected' : ''}`;
+        el.onclick = () => toggleBallFilter(item.num);
+        el.innerHTML = `
+          <div class="freq-num">${item.num < 10 ? '0' : ''}${item.num}</div>
+          <div class="freq-count">${item.count} 次</div>
+        `;
+        freqContainer.appendChild(el);
+      });
+    }
+
+    function toggleBallFilter(num) {
+      if (selectedBallFilter === num) {
+        selectedBallFilter = null;
+      } else {
+        selectedBallFilter = num;
+      }
+      updateKpisAndFrequency();
+      applyFilters();
+    }
+
+    function resetFilter() {
+      selectedBallFilter = null;
+      document.getElementById('searchInput').value = '';
+      filterByYear('all');
+    }
+
+    function showRecordDetails(r) {
+      document.getElementById('valPeriod').innerText = r.period;
+      const dateStr = (r.lotteryDate || '').split('T')[0];
+      document.getElementById('valDate').innerText = `開獎日期: ${dateStr}`;
+
+      const jp = r.super638JackpotAssign || {};
+      const winCount = jp.winnerCount || 0;
+      const perPrize = jp.perPrize || 0;
+
+      if (winCount > 0) {
+        document.getElementById('valJackpot').innerText = `頭獎 ${winCount} 注，各得 $${perPrize.toLocaleString()} 元`;
+      } else {
+        document.getElementById('valJackpot').innerText = `頭獎槓龜 (無人中獎)`;
+      }
+
+      // 第一區球號
+      const appear = r.drawNumberAppear || [];
+      const zone1Row = document.getElementById('zone1Row');
+      zone1Row.innerHTML = '';
+      for (let i = 0; i < 6; i++) {
+        const ball = document.createElement('div');
+        ball.className = 'lotto-ball ball-gold';
+        const val = appear[i] !== undefined ? appear[i] : '--';
+        ball.innerText = typeof val === 'number' && val < 10 ? `0${val}` : val;
+        zone1Row.appendChild(ball);
+      }
+
+      // 第二區球號
+      const zone2Ball = document.getElementById('zone2Ball');
+      const z2Val = appear[6] !== undefined ? appear[6] : '--';
+      zone2Ball.innerText = typeof z2Val === 'number' && z2Val < 10 ? `0${z2Val}` : z2Val;
+    }
+
+    function filterByYear(year) {
+      activeYear = year;
+      document.querySelectorAll('.year-pills .pill').forEach(pill => {
+        if (year === 'all' && pill.innerText.includes('全期別')) {
+          pill.classList.add('active');
+        } else if (pill.innerText.includes(year)) {
+          pill.classList.add('active');
+        } else {
+          pill.classList.remove('active');
+        }
+      });
+      applyFilters();
+    }
+
+    function handleSearch() {
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const keyword = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+
+      displayedRecords = allRecords.filter(r => {
+        const periodStr = String(r.period);
+        const dateStr = (r.lotteryDate || '').split('T')[0];
+        
+        // 年份過濾
+        if (activeYear !== 'all') {
+          if (!dateStr.startsWith(activeYear)) {
+            return false;
+          }
+        }
+
+        // 球號過濾
+        const sizeBalls = r.drawNumberSize || [];
+        if (selectedBallFilter !== null) {
+          if (!sizeBalls.slice(0, 6).includes(selectedBallFilter)) {
+            return false;
+          }
+        }
+
+        // 關鍵字搜尋
+        if (keyword) {
+          const appearStr = (r.drawNumberAppear || []).join(' ');
+          const sizeStr = (r.drawNumberSize || []).join(' ');
+          const matchTarget = `${periodStr} ${dateStr} ${appearStr} ${sizeStr}`.toLowerCase();
+          if (!matchTarget.includes(keyword)) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      renderTable();
+      document.getElementById('filterCount').innerText = `顯示 ${displayedRecords.length} / ${allRecords.length} 筆資料`;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      displayedRecords.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.onclick = () => {
+          document.querySelectorAll('tbody tr').forEach(el => el.classList.remove('active-row'));
+          tr.classList.add('active-row');
+          showRecordDetails(r);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        const dateStr = (r.lotteryDate || '').split('T')[0];
+        const appear = r.drawNumberAppear || [];
+        const size = r.drawNumberSize || [];
+        const z2 = size[6] !== undefined ? (size[6] < 10 ? `0${size[6]}` : size[6]) : '';
+        const jp = r.super638JackpotAssign || {};
+
+        const appearMini = appear.slice(0, 6).map(n => `<span class="mini-ball ball-gold">${n < 10 ? '0' + n : n}</span>`).join('');
+        const sizeMini = size.slice(0, 6).map(n => `<span class="mini-ball ball-gold">${n < 10 ? '0' + n : n}</span>`).join('');
+
+        tr.innerHTML = `
+          <td class="cell-period">第 ${r.period} 期</td>
+          <td style="color: var(--text-muted);">${dateStr}</td>
+          <td><div class="mini-balls">${appearMini}</div></td>
+          <td><div class="mini-balls">${sizeMini}</div></td>
+          <td><span class="mini-ball ball-red">${z2}</span></td>
+          <td style="text-align: center; font-weight: 600;">${jp.winnerCount || 0}</td>
+          <td style="color: ${jp.winnerCount > 0 ? 'var(--gold-primary)' : 'inherit'}; font-weight: 600;">
+            ${jp.winnerCount > 0 ? '$' + (jp.perPrize || 0).toLocaleString() : '-'}
+          </td>
+          <td style="color: var(--text-muted);">$${(r.sellAmount || 0).toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function downloadCsv() {
+      window.location.href = '/api/export/csv';
+    }
+
+    async function triggerSync() {
+      const btn = document.getElementById('btnSync');
+      btn.innerText = '⏳ 連線同步中...';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/sync', { method: 'POST' });
+        const result = await res.json();
+        alert(`同步完成！目前共整合 ${result.count} 期威力彩開獎紀錄。`);
+        await loadData();
+      } catch (err) {
+        alert('同步過程發生錯誤，請查看伺服器紀錄。');
+      } finally {
+        btn.innerHTML = '<span>🔄</span> 同步最新獎號';
+        btn.disabled = false;
+      }
+    }
+
+    function initZipModalYears() {
+      const list = document.getElementById('zipYearList');
+      list.innerHTML = '';
+      const curYear = new Date().getFullYear();
+      for (let y = curYear; y >= 2007; y--) {
+        const btn = document.createElement('a');
+        btn.className = 'year-btn';
+        btn.href = `https://cdn.taiwanlottery.com.tw/app/FilesForDownload/Download/LottoResult/${y}.zip`;
+        btn.target = '_blank';
+        btn.innerText = `${y} 年`;
+        list.appendChild(btn);
+      }
+    }
+
+    function openZipModal() {
+      document.getElementById('zipModal').classList.add('show');
+    }
+
+    function closeZipModal() {
+      document.getElementById('zipModal').classList.remove('show');
+    }
+
+    // ==========================================
+    // 🤖 Google OR-Tools AI 運籌預測前端邏輯
+    // ==========================================
+    let currentTicketCount = 5;
+    let aiStatusData = null;
+    let latestAiTickets = [];
+
+    async function checkAiStatus() {
+      try {
+        const res = await fetch('/api/ai/status');
+        if (!res.ok) return;
+        aiStatusData = await res.json();
+        const badge = document.getElementById('aiEngineStatus');
+        const label = document.getElementById('aiEngineLabel');
+        if (aiStatusData.available) {
+          badge.className = 'ai-engine-status engine-badge-green';
+          label.innerText = '🟢 Google OR-Tools CP-SAT 求解器 (運籌整數規劃)';
+          badge.title = 'Google OR-Tools CP-SAT Constraint Programming Solver 已就緒';
+        } else {
+          badge.className = 'ai-engine-status engine-badge-yellow';
+          label.innerText = '🟡 啟發式約束優化器 (點擊複製: pip install ortools)';
+          badge.title = '點擊可複製 Google OR-Tools 安裝指令至剪貼簿';
+        }
+      } catch (err) {
+        console.warn('檢查 AI 求解器狀態失敗:', err);
+      }
+    }
+
+    function copyInstallCmd() {
+      if (aiStatusData && !aiStatusData.available) {
+        navigator.clipboard.writeText('pip install ortools');
+        showToast('已複製「pip install ortools」到剪貼簿！可在終端機安裝以啟用 CP-SAT。');
+      }
+    }
+
+    function selectTicketCount(count) {
+      currentTicketCount = count;
+      document.querySelectorAll('#ticketPills .t-pill').forEach(btn => {
+        if (parseInt(btn.getAttribute('data-count')) === count) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      triggerAiPredict();
+    }
+
+    async function triggerAiPredict() {
+      const btn = document.getElementById('btnAiSolve');
+      const btnText = document.getElementById('btnAiSolveText');
+      const container = document.getElementById('ticketsContainer');
+
+      // 解析約束條件
+      const lockedVal = (document.getElementById('inputLocked').value || '').replace(/，/g, ',').split(',');
+      const locked_z1 = [];
+      lockedVal.forEach(v => {
+        const n = parseInt(v.trim());
+        if (!isNaN(n) && n >= 1 && n <= 38 && !locked_z1.includes(n)) {
+          locked_z1.push(n);
+        }
+      });
+      if (locked_z1.length > 5) {
+        alert('第一區必選膽碼最多只能設定 5 個號碼！');
+        return;
+      }
+
+      const excludedVal = (document.getElementById('inputExcluded').value || '').replace(/，/g, ',').split(',');
+      const excluded_z1 = [];
+      excludedVal.forEach(v => {
+        const n = parseInt(v.trim());
+        if (!isNaN(n) && n >= 1 && n <= 38 && !excluded_z1.includes(n)) {
+          excluded_z1.push(n);
+        }
+      });
+
+      const conflict = locked_z1.filter(n => excluded_z1.includes(n));
+      if (conflict.length > 0) {
+        alert(`號碼 [${conflict.join(', ')}] 同時出現在膽碼與殺號中，請重新設定！`);
+        return;
+      }
+
+      const z2SelectVal = document.getElementById('selectZ2').value;
+      const locked_z2 = z2SelectVal ? parseInt(z2SelectVal) : null;
+
+      const sumMin = parseInt(document.getElementById('inputSumMin').value) || 85;
+      const sumMax = parseInt(document.getElementById('inputSumMax').value) || 155;
+      const diversity = document.getElementById('chkDiversity').checked;
+
+      const payload = {
+        count: currentTicketCount,
+        constraints: {
+          locked_z1,
+          excluded_z1,
+          locked_z2,
+          sum_min: sumMin,
+          sum_max: sumMax,
+          diversity
+        }
+      };
+
+      // 載入狀態
+      btn.disabled = true;
+      btnText.innerText = '運籌求解計算中...';
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+          <div style="font-size: 2.2rem; display: inline-block;">⚙️</div>
+          <div style="margin-top: 10px; font-weight: 600; color: var(--gold-primary);">Google OR-Tools CP-SAT 正在求解最佳解空間...</div>
+          <div style="font-size: 0.8rem; margin-top: 4px; color: var(--text-muted);">計算遺漏值回補潛力、共現親和度矩陣與多注包牌覆蓋率</div>
+        </div>
+      `;
+
+      try {
+        const res = await fetch('/api/ai/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('API request failed');
+        const data = await res.json();
+        
+        if (data.status === 'success') {
+          latestAiTickets = data.recommended_tickets || [];
+          document.getElementById('resultsCountTag').innerText = `共 ${latestAiTickets.length} 注`;
+          renderAiTickets(latestAiTickets);
+
+          // 更新特徵工程摘要
+          if (data.statistics_summary) {
+            const sumry = data.statistics_summary;
+            document.getElementById('aiStatDraws').innerText = `${sumry.total_draws} 期`;
+            document.getElementById('aiStatAvgSum').innerText = `${sumry.avg_sum}`;
+            document.getElementById('aiStatHot').innerText = (sumry.hot_numbers_zone1 || []).slice(0, 5).map(n => (n < 10 ? '0' + n : n)).join(', ');
+            document.getElementById('aiStatHotZ2').innerText = (sumry.hot_numbers_zone2 || []).slice(0, 3).map(n => (n < 10 ? '0' + n : n)).join(', ');
+          }
+        } else {
+          container.innerHTML = `<div style="text-align: center; padding: 30px; color: #f87171;">求解失敗: ${data.message || '未知錯誤'}</div>`;
+        }
+      } catch (err) {
+        console.error('AI 求解出錯:', err);
+        container.innerHTML = `<div style="text-align: center; padding: 30px; color: #f87171;">無法連接至 AI 求解伺服器，請確認伺服器運作正常。</div>`;
+      } finally {
+        btn.disabled = false;
+        btnText.innerText = '啟動 AI 運籌最佳化求解';
+      }
+    }
+
+    function renderAiTickets(tickets) {
+      const container = document.getElementById('ticketsContainer');
+      container.innerHTML = '';
+
+      if (!tickets || tickets.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted);">無推薦注單，請確認約束條件是否過於嚴格。</div>`;
+        return;
+      }
+
+      tickets.forEach((t, idx) => {
+        const card = document.createElement('div');
+        card.className = 'ticket-card';
+
+        const tNo = t.ticket_no || idx + 1;
+        const score = t.score || 90;
+        const z1 = t.zone1 || [];
+        const z2 = t.zone2 || 0;
+        const reasons = t.reasons || [];
+        const engine = t.engine || 'Google OR-Tools';
+
+        // 渲染球號
+        const z1BallsHtml = z1.map(n => `<div class="ai-ball ball-gold">${n < 10 ? '0' + n : n}</div>`).join('');
+        const z2BallHtml = `<div class="ai-ball ball-red">${z2 < 10 ? '0' + z2 : z2}</div>`;
+
+        // 理由標籤
+        const reasonsHtml = reasons.map(r => `<span class="reason-pill">${r}</span>`).join('');
+
+        card.innerHTML = `
+          <div class="ticket-top">
+            <div class="ticket-meta-left">
+              <span class="ticket-badge-num">第 ${tNo < 10 ? '0' + tNo : tNo} 注</span>
+              <span class="ticket-score-badge">🌟 ${score} 分</span>
+              <span class="ticket-metrics">
+                <span>和值: <strong>${t.sum}</strong></span>
+                <span>奇偶: <strong>${t.odd_even}</strong></span>
+                <span>大小: <strong>${t.high_low}</strong></span>
+              </span>
+            </div>
+            <button class="btn-copy-ticket" onclick="copySingleAiTicket(${idx})">
+              <span>📋</span> 複製此注
+            </button>
+          </div>
+
+          <div class="ticket-balls-wrap">
+            <div class="ticket-balls-z1">${z1BallsHtml}</div>
+            <div class="ball-separator">+</div>
+            <div>${z2BallHtml}</div>
+          </div>
+
+          <div class="ticket-reasons-wrap">
+            <span style="font-size: 0.75rem; color: var(--text-muted);">⚙️ ${engine}:</span>
+            ${reasonsHtml}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function copySingleAiTicket(idx) {
+      if (!latestAiTickets || !latestAiTickets[idx]) return;
+      const t = latestAiTickets[idx];
+      const z1Str = (t.zone1 || []).map(n => (n < 10 ? '0' + n : n)).join(' ');
+      const z2Str = t.zone2 < 10 ? '0' + t.zone2 : t.zone2;
+      const text = `威力彩 AI 運籌推薦 第 ${t.ticket_no || idx + 1} 注: 第一區 [${z1Str}] + 第二區 [${z2Str}] (和值:${t.sum}, 評分:${t.score}分)`;
+      navigator.clipboard.writeText(text);
+      showToast(`✅ 已複製 第 ${t.ticket_no || idx + 1} 注 至剪貼簿！`);
+    }
+
+    function copyAllAiTickets() {
+      if (!latestAiTickets || latestAiTickets.length === 0) {
+        showToast('目前尚無可複製之推薦注單！');
+        return;
+      }
+      const lines = ['【台灣彩券 · 威力彩 Google OR-Tools AI 運籌智慧推薦注單】'];
+      latestAiTickets.forEach((t, i) => {
+        const z1Str = (t.zone1 || []).map(n => (n < 10 ? '0' + n : n)).join(' ');
+        const z2Str = t.zone2 < 10 ? '0' + t.zone2 : t.zone2;
+        lines.push(`第 ${t.ticket_no || i + 1} 注: 第一區 [${z1Str}] + 第二區 [${z2Str}]  | 和值:${t.sum} | 評分:${t.score}分 | ${(t.reasons || []).join(', ')}`);
+      });
+      navigator.clipboard.writeText(lines.join('\n'));
+      showToast(`✅ 已成功複製全部 ${latestAiTickets.length} 組推薦注單至剪貼簿！`);
+    }
+
+    function scrollToAiSection() {
+      const el = document.getElementById('aiSection');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotify');
+      if (!toast) return;
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+  </script>
+
+  <!-- 複製成功的吐司提示 -->
+  <div class="toast-notify" id="toastNotify">已成功複製至剪貼簿！</div>
+</body>
+</html>

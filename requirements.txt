@@ -1,0 +1,6 @@
+# Taiwan Lottery AI Prediction Web Service
+# Python 3.10+ / 3.11 / 3.12 compatible
+Flask>=3.0.0
+waitress>=3.0.0
+gunicorn>=21.2.0
+ortools>=9.8.3296
