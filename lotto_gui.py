@@ -4,7 +4,7 @@
 ========================================================================
 整合在單一現代桌面視窗內，提供：
 1. 頂部即時開獎 Showcase（擬真 3D 光影彩球、派彩金額與銷售總額）
-2. 🤖 Google OR-Tools AI 運籌預測專區（0-1 整數規劃、自訂膽碼/殺號、和值、多注包牌多樣性）
+2. 🤖 AI 智慧運籌預測專區（0-1 整數規劃、自訂膽碼/殺號、和值、多注包牌多樣性）
 3. 📋 各期歷史獎號資料庫清單（282+ 期完整紀錄、即時搜尋過濾、落球與大小排序）
 4. 📊 號碼頻率與數據分析（熱門號/冷門號排行榜、遺漏值回補潛力、第二區分佈）
 5. 一鍵線上同步更新、匯出 CSV / JSON、下載台彩官方年度封存 ZIP
@@ -132,7 +132,7 @@ class TaiwanLottoApp(tk.Tk):
     """威力彩全功能整合型主程式視窗"""
     def __init__(self):
         super().__init__()
-        self.title("台灣彩券 · 威力彩大數據歷史系統與 Google OR-Tools AI 運籌預測")
+        self.title("台灣彩券 · 威力彩大數據歷史系統與 AI 運籌預測系統")
         self.geometry("1240x860")
         self.minsize(1040, 720)
         self.configure(bg=COLOR_BG)
@@ -197,9 +197,9 @@ class TaiwanLottoApp(tk.Tk):
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(side="top", fill="both", expand=True, padx=16, pady=(4, 12))
 
-        # 頁籤 1: 🤖 Google OR-Tools AI 運籌預測
+        # 頁籤 1: 🤖 AI 智慧運籌預測
         self.tab_ai = tk.Frame(self.notebook, bg=COLOR_BG)
-        self.notebook.add(self.tab_ai, text="  🤖 Google OR-Tools AI 智慧運籌預測  ")
+        self.notebook.add(self.tab_ai, text="  🤖 AI 智慧運籌預測  ")
         self.build_ai_tab()
 
         # 頁籤 2: 📋 各期歷史獎號清單與查詢
@@ -243,7 +243,7 @@ class TaiwanLottoApp(tk.Tk):
         # 右側：求解引擎狀態指示徽章
         ortools_status = check_ortools_status() if check_ortools_status else {"available": False}
         if ortools_status.get("available"):
-            engine_text = "🟢 Google OR-Tools CP-SAT 啟用 (0-1 混合整數規劃)"
+            engine_text = "🟢 AI 運籌 CP-SAT 啟用 (0-1 混合整數規劃)"
             badge_fg = COLOR_TEAL
         else:
             engine_text = "🟡 啟發式約束優化器 (建議: pip install ortools)"
@@ -297,7 +297,7 @@ class TaiwanLottoApp(tk.Tk):
         self.lbl_sales_val.pack(anchor="e")
 
     # ==========================================
-    # 頁籤 1: 🤖 Google OR-Tools AI 運籌預測佈局
+    # 頁籤 1: 🤖 AI 智慧運籌預測佈局
     # ==========================================
     def build_ai_tab(self):
         ai_main = tk.Frame(self.tab_ai, bg=COLOR_BG, padx=8, pady=8)
@@ -906,7 +906,7 @@ class TaiwanLottoApp(tk.Tk):
 
             # 決策理由與特徵標籤
             reasons = t.get("reasons", [])
-            engine_name = t.get("engine", "Google OR-Tools")
+            engine_name = t.get("engine", "AI 運籌最佳化")
             reasons_row = tk.Frame(card, bg=COLOR_CARD)
             reasons_row.pack(anchor="w", pady=(6, 0))
 
@@ -928,7 +928,7 @@ class TaiwanLottoApp(tk.Tk):
             messagebox.showinfo("提示", "目前沒有可複製的注單。")
             return
 
-        lines = ["【台灣彩券 · 威力彩 Google OR-Tools AI 智慧推薦注單】"]
+        lines = ["【台灣彩券 · 威力彩 AI 智慧運籌推薦注單】"]
         for t in self.ai_tickets:
             z1_str = " ".join(f"{n:02d}" for n in t.get("zone1", []))
             z2_str = f"{t.get('zone2', 0):02d}"

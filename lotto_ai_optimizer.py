@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-台灣彩券 - 威力彩 AI 統計分析與 Google OR-Tools 運籌最佳化預測模組
+台灣彩券 - 威力彩 AI 統計分析與運籌最佳化預測模組
 =====================================================================
 結合運籌學 (Operations Research) 與機器學習特徵工程：
 1. 歷史數據特徵工程：
@@ -8,7 +8,7 @@
    - 遺漏值回補潛力 (Omission/Due index)：統計各號碼未開出的間隔期數
    - 雙號關聯度矩陣 (Co-occurrence Affinity)：計算常伴隨開出的號碼組合
    - 和值分佈 (Sum range)、奇偶比例 (Parity)、大小分佈 (High/Low)
-2. Google OR-Tools (CP-SAT 求解器) 建模：
+2. 運籌學 CP-SAT 求解器建模：
    - 決策變數：第一區 38 選 6 0-1 整數變數、第二區 8 選 1 變數
    - 硬性約束：6 顆不重複、和值合理區間 (85 ~ 155)、奇偶比 (2:4 ~ 4:2)、大小比 (2:4 ~ 4:2)、連號限制
    - 目標函數：最大化綜合潛力分數 (綜合熱門度、遺漏回補率與號碼共現親和度)
@@ -24,13 +24,13 @@ import random
 from collections import Counter, defaultdict
 from datetime import datetime
 
-# Google OR-Tools 延遲載入機制 (避免啟動主程式時造成卡頓)
+# 運籌求解器延遲載入機制 (避免啟動主程式時造成卡頓)
 _cp_model = None
 _ortools_checked = False
 _ortools_available = False
 
 def get_cp_model():
-    """延遲載入 Google OR-Tools CP-SAT 模型庫"""
+    """延遲載入 CP-SAT 模型庫"""
     global _cp_model, _ortools_checked, _ortools_available
     if not _ortools_checked:
         try:
@@ -48,11 +48,11 @@ def is_ortools_available() -> bool:
     return _ortools_available
 
 def check_ortools_status() -> dict:
-    """檢查 Google OR-Tools 安裝狀況"""
+    """檢查運籌求解器安裝狀況"""
     available = is_ortools_available()
     return {
         "available": available,
-        "engine": "Google OR-Tools CP-SAT Solver" if available else "內建啟發式約束優化器 (Heuristic CP Solver)",
+        "engine": "AI 運籌 CP-SAT 求解器" if available else "內建啟發式約束優化器 (Heuristic CP Solver)",
         "install_cmd": "pip install ortools"
     }
 
@@ -171,7 +171,7 @@ class LottoAnalyzer:
         }
 
     def compute_ball_weights(self) -> tuple:
-        """計算第一區與第二區每顆球的綜合潛力權重 (轉為整數供 OR-Tools 使用)"""
+        """計算第一區與第二區每顆球的綜合潛力權重 (轉為整數供運籌求解器使用)"""
         weights_z1 = {}
         max_freq = max(self.zone1_freq.values()) if self.zone1_freq else 1
         max_omiss = max(self.zone1_omission.values()) if self.zone1_omission else 1
@@ -206,7 +206,7 @@ class LottoAnalyzer:
 
 
 class GoogleORLotteryOptimizer:
-    """基於 Google OR-Tools CP-SAT 的威力彩組合求解器"""
+    """基於 CP-SAT 的威力彩運籌組合求解器"""
     def __init__(self, analyzer: LottoAnalyzer):
         self.analyzer = analyzer
         self.weights_z1, self.weights_z2 = self.analyzer.compute_ball_weights()
@@ -235,7 +235,7 @@ class GoogleORLotteryOptimizer:
             return self._solve_with_heuristic(num_tickets, user_constraints)
 
     def _solve_with_ortools(self, num_tickets, constraints) -> list:
-        """使用 Google OR-Tools CP-SAT 嚴謹數學規劃求解"""
+        """使用 CP-SAT 嚴謹運籌數學規劃求解"""
         cp_model = get_cp_model()
         if not cp_model:
             return self._solve_with_heuristic(num_tickets, constraints)
@@ -326,7 +326,7 @@ class GoogleORLotteryOptimizer:
                 evaluation = self._evaluate_ticket(selected_z1, selected_z2)
                 results.append({
                     "ticket_no": ticket_idx + 1,
-                    "engine": "Google OR-Tools (CP-SAT)",
+                    "engine": "AI 運籌最佳化 (CP-SAT)",
                     "zone1": selected_z1,
                     "zone2": selected_z2,
                     "sum": sum(selected_z1),
@@ -499,12 +499,12 @@ def generate_predictions(records_json_path="super_lotto_history.json", num_ticke
 
 if __name__ == "__main__":
     print("=" * 65)
-    print(" 台灣彩券 - 威力彩 AI 最佳化預測 (Google OR-Tools 運籌模型)")
+    print(" 台灣彩券 - 威力彩 AI 最佳化預測 (AI 運籌數學模型)")
     print("=" * 65)
     status = check_ortools_status()
     print(f"求解引擎狀態: {status['engine']}")
     if not status['available']:
-        print(f"提示: 安裝 Google OR-Tools 獲得最高性能求解: {status['install_cmd']}")
+        print(f"提示: 安裝 ortools 獲得最高性能求解: {status['install_cmd']}")
     print("-" * 65)
 
     res = generate_predictions(num_tickets=5)
@@ -513,7 +513,7 @@ if __name__ == "__main__":
         print(f"歷史分析樣本: {summary['total_draws']} 期 | 平均和值: {summary['avg_sum']}")
         print(f"第一區最熱門號碼: {summary['hot_numbers_zone1']}")
         print(f"第二區最熱門號碼: {summary['hot_numbers_zone2']}")
-        print("\n【Google OR-Tools AI 智慧推薦注單 (5 注多樣性包牌)】")
+        print("\n【AI 運籌最佳化智慧推薦注單 (5 注多樣性包牌)】")
         for t in res["recommended_tickets"]:
             z1_str = " ".join(f"{n:02d}" for n in t["zone1"])
             z2_str = f"{t['zone2']:02d}"

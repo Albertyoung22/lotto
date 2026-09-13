@@ -254,7 +254,7 @@ def main():
             status = check_ortools_status()
             print(f"求解引擎狀態: {status['engine']}")
             if not status['available']:
-                print(f"提示: 可執行 {status['install_cmd']} 啟用 Google OR-Tools CP-SAT 嚴謹數學求解器。")
+                print(f"提示: 可執行 {status['install_cmd']} 啟用 AI 運籌 CP-SAT 嚴謹數學求解器。")
             tickets_cnt = int(sys.argv[2]) if len(sys.argv) > 2 and sys.argv[2].isdigit() else 5
             res = generate_predictions("super_lotto_history.json", num_tickets=tickets_cnt)
             if res.get("status") == "success":
@@ -262,7 +262,7 @@ def main():
                 print(f"\n歷史特徵分析: {summary['total_draws']} 期 | 平均和值: {summary['avg_sum']}")
                 print(f"第一區最熱門號碼: {summary['hot_numbers_zone1']}")
                 print(f"第二區最熱門號碼: {summary['hot_numbers_zone2']}")
-                print(f"\n【Google OR-Tools AI 智慧推薦注單 ({len(res['recommended_tickets'])} 注多樣性包牌)】")
+                print(f"\n【AI 運籌最佳化智慧推薦注單 ({len(res['recommended_tickets'])} 注多樣性包牌)】")
                 for t in res["recommended_tickets"]:
                     z1_str = " ".join(f"{n:02d}" for n in t["zone1"])
                     z2_str = f"{t['zone2']:02d}"

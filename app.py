@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-台灣彩券 · 威力彩 Web 視覺化儀表板與 Google OR-Tools AI 運籌預測服務 (Flask + Waitress / Gunicorn)
+台灣彩券 · 威力彩 Web 視覺化儀表板與 AI 運籌預測服務 (Flask + Waitress / Gunicorn)
 ========================================================================================
 支援本機運行與雲端平台 (Render, Railway, Fly.io, Heroku) 部署：
 - 雲端 (Render / Linux): 自動由 Gunicorn 啟動 (gunicorn app:app)
@@ -115,14 +115,14 @@ def export_csv_file():
 
 @app.route("/api/ai/status", methods=["GET"])
 def get_ai_engine_status():
-    """查詢當前環境 Google OR-Tools CP-SAT 運籌求解器安裝狀態"""
+    """查詢當前環境 AI 運籌求解器安裝狀態"""
     status = check_ortools_status()
     return jsonify(status)
 
 @app.route("/api/ai/predict", methods=["GET", "POST"])
 def predict_tickets():
     """
-    執行 Google OR-Tools AI 運籌學最佳化求解：
+    執行 AI 運籌學最佳化求解：
     支援自訂約束：注數 (count)、膽碼 (locked_z1)、殺號 (excluded_z1)、特別號 (locked_z2)、和值範圍 (sum_min, sum_max)、多樣性包牌
     """
     ensure_data_exists()

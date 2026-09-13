@@ -1,6 +1,6 @@
-# 台灣彩券 · 威力彩大數據視覺化儀表板與 Google OR-Tools AI 運籌預測系統
+# 台灣彩券 · 威力彩大數據視覺化儀表板與 AI 運籌預測系統
 
-本專案提供**完整、視覺化且全自動**的方案，用於查詢、下載與統計台灣彩券「威力彩」（Super Lotto 6/38）歷史各期開獎獎號與派彩數據，並深度整合 **Google OR-Tools (運籌學 CP-SAT 求解器)** 提供具備嚴謹數學模型與多注多樣性包牌的智慧推薦。
+本專案提供**完整、視覺化且全自動**的方案，用於查詢、下載與統計台灣彩券「威力彩」（Super Lotto 6/38）歷史各期開獎獎號與派彩數據，並深度整合 **運籌學 CP-SAT 求解器 (Operations Research)** 提供具備嚴謹數學模型與多注多樣性包牌的智慧推薦。
 
 支援 **Flask Web 雲端部署 (Render / Railway / GitHub)** 以及 **Windows 原生一體化桌面 GUI**。
 
@@ -25,7 +25,7 @@ git init
 git add .
 
 # 4. 提交版本
-git commit -m "feat: Taiwan Lottery Flask Web App with Google OR-Tools AI Optimizer"
+git commit -m "feat: Taiwan Lottery Flask Web App with AI Optimizer"
 
 # 5. 連接至您的 GitHub 遠端儲存庫
 git remote add origin https://github.com/Albertyoung22/lotto.git
@@ -66,7 +66,7 @@ git push -u origin main
 ## 💻 本機執行方式 (Local Development)
 
 ### 1. 🌐 網頁版 (Flask + Waitress WSGI)
-- **特色**：暗黑金屬玻璃擬態（Glassmorphism）極致視覺美學、3D 漸層炫彩球、Google OR-Tools AI 智慧包牌、單注/全選複製、即時官方同步。
+- **特色**：暗黑金屬玻璃擬態（Glassmorphism）極致視覺美學、3D 漸層炫彩球、AI 運籌智慧包牌、單注/全選複製、即時官方同步。
 - **本機啟動**：
   ```bash
   # 安裝相依套件 (首次)
@@ -84,7 +84,7 @@ git push -u origin main
 - **特色**：
   - 單一視窗（All-in-One）無彈窗整合設計。
   - 頂部 Showcase 3D 彩球即時連動。
-  - 頁籤 1：🤖 Google OR-Tools AI 智慧運籌預測（自訂膽碼、殺號、和值、多注互斥）。
+  - 頁籤 1：🤖 AI 智慧運籌預測（自訂膽碼、殺號、和值、多注互斥）。
   - 頁籤 2：📋 282+ 期完整歷史開獎清單與即時搜尋。
   - 頁籤 3：📊 號碼開出頻率與遺漏值排行榜。
 - **本機啟動**：
@@ -95,7 +95,7 @@ git push -u origin main
 
 ---
 
-## 🤖 Google OR-Tools 運籌學 AI 最佳化原理
+## 🤖 運籌學 AI 最佳化原理
 
 有別於不可解釋的黑箱神經網路，本系統將彩券選號問題定義為**運籌學約束滿足與組合最佳化問題 (Combinatorial Optimization & 0-1 Mixed Integer Programming)**：
 
@@ -106,7 +106,7 @@ git push -u origin main
 - **和值黃金常態分佈 (Sum Distribution)**：統計威力彩歷史開獎平均和值為 **117**，設定常態區間 **85 ~ 155**。
 - **奇偶與大小比例平衡 (Parity & High/Low)**：奇偶比與大小比嚴格限制於 $2:4 \sim 4:2$ 常態平衡範圍內。
 
-### 2. Google OR-Tools CP-SAT 0-1 整數規劃建模
+### 2. CP-SAT 0-1 整數規劃建模
 - **決策變數**：$x_i \in \{0, 1\}$，代表第 $i$ 號是否選中（$i = 1, \dots, 38$）。
 - **號碼數量約束**：$\sum_{i=1}^{38} x_i = 6$（第一區精確選出 6 顆球）。
 - **連號防禦約束**：$\forall i, x_i + x_{i+1} + x_{i+2} \le 2$（連續 3 顆球開出機率極低，強制防禦過度密集連號）。
@@ -127,7 +127,7 @@ git push -u origin main
 | `requirements.txt` | Python 相依函式庫清單 (Flask, waitress, gunicorn, ortools) |
 | `.gitignore` | Git 版本控制忽略清單 |
 | `web/index.html` | 現代化極致玻璃擬態前端網頁 (含 3D 彩球與 AI 運籌面板) |
-| `lotto_ai_optimizer.py` | Google OR-Tools CP-SAT 運籌整數規劃與啟發式備援核心 |
+| `lotto_ai_optimizer.py` | CP-SAT 運籌整數規劃與啟發式備援核心 |
 | `lotto_gui.py` | 一體化原生桌面視窗 GUI 程式 |
 | `taiwan_lottery.py` | 台彩官方資料爬蟲、JSON/CSV 存取模組與 CLI 工具 |
 | `super_lotto_history.csv` | 2024~至今全期開獎紀錄 (CSV 格式) |

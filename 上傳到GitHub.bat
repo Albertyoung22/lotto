@@ -34,7 +34,7 @@ git branch -M main
 
 echo [4/5] 將專案檔案加入 Git 暫存區並提交...
 git add -A
-git commit -m "feat: Taiwan Lottery Flask Web App with Google OR-Tools AI on Render" 2>nul
+git commit -m "feat: Taiwan Lottery Flask Web App with AI Optimizer on Render" 2>nul
 if %ERRORLEVEL% NEQ 0 (
     echo [提示] 檔案已是最新狀態，無需重複提交。
 )

@@ -650,7 +650,7 @@
       background: rgba(255, 255, 255, 0.25);
     }
 
-    /* 🤖 Google OR-Tools AI 專案樣式 */
+    /* 🤖 AI 運籌最佳化專案樣式 */
     .btn-ai-nav {
       background: linear-gradient(135deg, #f59e0b 0%, #ec4899 100%);
       color: #ffffff;
@@ -1238,7 +1238,7 @@
     </div>
     <div class="header-actions">
       <button class="btn btn-ai-nav" onclick="scrollToAiSection()">
-        <span>🤖</span> Google OR 運籌預測
+        <span>🤖</span> AI 運籌預測
       </button>
       <button class="btn btn-secondary" id="btnSync" onclick="triggerSync()">
         <span>🔄</span> 同步最新獎號
@@ -1322,13 +1322,13 @@
       </div>
     </section>
 
-    <!-- 🤖 Google OR-Tools AI 運籌最佳化推薦專區 -->
+    <!-- 🤖 AI 智慧運籌最佳化推薦專區 -->
     <section class="ai-card" id="aiSection">
       <div class="ai-card-header">
         <div class="ai-title-wrap">
           <div class="ai-robot-badge">🤖</div>
           <div>
-            <div class="ai-title">Google OR-Tools 運籌最佳化 · AI 智慧預測推薦</div>
+            <div class="ai-title">AI 運籌最佳化 · 智慧預測推薦</div>
             <div class="ai-subtitle">利用 0-1 混合整數規劃 (CP-SAT)、歷史遺漏回補、共現親和矩陣與包牌覆蓋率最佳化</div>
           </div>
         </div>
@@ -1799,7 +1799,7 @@
     }
 
     // ==========================================
-    // 🤖 Google OR-Tools AI 運籌預測前端邏輯
+    // 🤖 AI 智慧運籌預測前端邏輯
     // ==========================================
     let currentTicketCount = 5;
     let aiStatusData = null;
@@ -1814,12 +1814,12 @@
         const label = document.getElementById('aiEngineLabel');
         if (aiStatusData.available) {
           badge.className = 'ai-engine-status engine-badge-green';
-          label.innerText = '🟢 Google OR-Tools CP-SAT 求解器 (運籌整數規劃)';
-          badge.title = 'Google OR-Tools CP-SAT Constraint Programming Solver 已就緒';
+          label.innerText = '🟢 AI 運籌 CP-SAT 求解器 (整數規劃)';
+          badge.title = 'AI CP-SAT Constraint Programming Solver 已就緒';
         } else {
           badge.className = 'ai-engine-status engine-badge-yellow';
           label.innerText = '🟡 啟發式約束優化器 (點擊複製: pip install ortools)';
-          badge.title = '點擊可複製 Google OR-Tools 安裝指令至剪貼簿';
+          badge.title = '點擊可複製相依套件安裝指令至剪貼簿';
         }
       } catch (err) {
         console.warn('檢查 AI 求解器狀態失敗:', err);
@@ -1904,7 +1904,7 @@
       container.innerHTML = `
         <div style="text-align: center; padding: 40px; color: var(--text-muted);">
           <div style="font-size: 2.2rem; display: inline-block;">⚙️</div>
-          <div style="margin-top: 10px; font-weight: 600; color: var(--gold-primary);">Google OR-Tools CP-SAT 正在求解最佳解空間...</div>
+          <div style="margin-top: 10px; font-weight: 600; color: var(--gold-primary);">AI 運籌 CP-SAT 正在求解最佳解空間...</div>
           <div style="font-size: 0.8rem; margin-top: 4px; color: var(--text-muted);">計算遺漏值回補潛力、共現親和度矩陣與多注包牌覆蓋率</div>
         </div>
       `;
@@ -1961,7 +1961,7 @@
         const z1 = t.zone1 || [];
         const z2 = t.zone2 || 0;
         const reasons = t.reasons || [];
-        const engine = t.engine || 'Google OR-Tools';
+        const engine = t.engine || 'AI 運籌最佳化';
 
         // 渲染球號
         const z1BallsHtml = z1.map(n => `<div class="ai-ball ball-gold">${n < 10 ? '0' + n : n}</div>`).join('');
@@ -2016,7 +2016,7 @@
         showToast('目前尚無可複製之推薦注單！');
         return;
       }
-      const lines = ['【台灣彩券 · 威力彩 Google OR-Tools AI 運籌智慧推薦注單】'];
+      const lines = ['【台灣彩券 · 威力彩 AI 智慧運籌推薦注單】'];
       latestAiTickets.forEach((t, i) => {
         const z1Str = (t.zone1 || []).map(n => (n < 10 ? '0' + n : n)).join(' ');
         const z2Str = t.zone2 < 10 ? '0' + t.zone2 : t.zone2;
