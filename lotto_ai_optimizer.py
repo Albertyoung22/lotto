@@ -205,7 +205,7 @@ class LottoAnalyzer:
         return weights_z1, weights_z2
 
 
-class GoogleORLotteryOptimizer:
+class LottoAIOptimizer:
     """基於 CP-SAT 的威力彩運籌組合求解器"""
     def __init__(self, analyzer: LottoAnalyzer):
         self.analyzer = analyzer
@@ -472,6 +472,10 @@ class GoogleORLotteryOptimizer:
         return {"score": score, "reasons": reasons}
 
 
+# 相容別名
+GoogleORLotteryOptimizer = LottoAIOptimizer
+
+
 def generate_predictions(records_json_path="super_lotto_history.json", num_tickets=5, constraints=None) -> dict:
     """供外界調用的主介面函數"""
     if not os.path.exists(records_json_path):
@@ -483,7 +487,7 @@ def generate_predictions(records_json_path="super_lotto_history.json", num_ticke
     analyzer = LottoAnalyzer(records)
     summary = analyzer.get_summary()
 
-    optimizer = GoogleORLotteryOptimizer(analyzer)
+    optimizer = LottoAIOptimizer(analyzer)
     tickets = optimizer.solve_combinations(num_tickets=num_tickets, user_constraints=constraints)
 
     ortools_info = check_ortools_status()

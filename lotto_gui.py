@@ -56,13 +56,13 @@ except ImportError:
 try:
     from lotto_ai_optimizer import (
         LottoAnalyzer,
-        GoogleORLotteryOptimizer,
+        LottoAIOptimizer,
         check_ortools_status,
         generate_predictions
     )
 except ImportError:
     LottoAnalyzer = None
-    GoogleORLotteryOptimizer = None
+    LottoAIOptimizer = None
     check_ortools_status = lambda: {"available": False, "engine": "啟發式約束優化器", "install_cmd": "pip install ortools"}
     generate_predictions = None
 
@@ -831,8 +831,8 @@ class TaiwanLottoApp(tk.Tk):
                 if not self.analyzer and self.records and LottoAnalyzer:
                     self.analyzer = LottoAnalyzer(self.records)
 
-                if self.analyzer and GoogleORLotteryOptimizer:
-                    optimizer = GoogleORLotteryOptimizer(self.analyzer)
+                if self.analyzer and LottoAIOptimizer:
+                    optimizer = LottoAIOptimizer(self.analyzer)
                     results = optimizer.solve_combinations(num_tickets=count, user_constraints=constraints)
                 else:
                     results = []
