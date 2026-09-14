@@ -139,6 +139,35 @@ class TaiwanLottoApp(tk.Tk):
         self.minsize(1080, 760)
         self.configure(bg=COLOR_BG)
 
+        # 設定 Windows 工作列與視窗標題列專屬 Icon
+        if os.name == 'nt':
+            try:
+                import ctypes
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("TaiwanLottery.SuperAI.GUI.1.0")
+            except Exception:
+                pass
+
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")
+        artifact_icon = r"C:\Users\USER\.gemini\antigravity-ide\brain\69a2e7a7-0a3c-4978-ae54-2cca864a7b35\lotto_icon_1789355314888.png"
+        if not os.path.exists(icon_path) and os.path.exists(artifact_icon):
+            try:
+                import shutil
+                shutil.copy(artifact_icon, icon_path)
+                web_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
+                shutil.copy(artifact_icon, os.path.join(web_dir, "icon.png"))
+                shutil.copy(artifact_icon, os.path.join(web_dir, "favicon.ico"))
+            except Exception:
+                pass
+
+        if os.path.exists(icon_path):
+            try:
+                self.icon_img = tk.PhotoImage(file=icon_path)
+                self.iconphoto(True, self.icon_img)
+            except Exception as e:
+                print("載入 Icon 失敗:", e)
+
+
+
 
         # 狀態資料
         self.records = []

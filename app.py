@@ -167,6 +167,39 @@ def health_check():
     }), 200
 
 # -------------------------------------------------------------
+# Render 自動保活 / 防休眠內部線程 (Self Keep-Alive Thread)
+# -------------------------------------------------------------
+import threading
+import time
+
+def start_keep_alive_thread():
+    """在背景啟動防休眠 Ping 線程，維護 Render 雲端熱啟動 (每 10 分鐘自動打卡)"""
+    def _ping_loop():
+        time.sleep(20)  # 等待伺服器啟動完成
+        render_url = os.environ.get("RENDER_EXTERNAL_URL") or "https://taiwan-lottery-api.onrender.com"
+        target_url = f"{render_url.rstrip('/')}/health"
+        print(f"[*] 防休眠打卡機制已啟動，每 10 分鐘自動存取: {target_url}")
+
+        import urllib.request
+        while True:
+            try:
+                req = urllib.request.Request(target_url, headers={"User-Agent": "RenderKeepAlive/1.0"})
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    print(f"[{datetime.now().strftime('%H:%M:%S')}] Render 防休眠打卡成功 (HTTP {resp.status})")
+            except Exception as e:
+                print(f"[保活機制] 定時 Ping 提示: {e}")
+            
+            # 每 10 分鐘 (600 秒) 自動 Ping 一次
+            time.sleep(600)
+
+    t = threading.Thread(target=_ping_loop, daemon=True)
+    t.start()
+
+# 啟動防休眠背景線程
+start_keep_alive_thread()
+
+
+# -------------------------------------------------------------
 # 啟動伺服器 (本機 Waitress / 開發伺服器)
 # -------------------------------------------------------------
 if __name__ == "__main__":
