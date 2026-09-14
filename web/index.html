@@ -773,7 +773,9 @@
       display: grid;
       grid-template-columns: 340px 1fr;
       gap: 24px;
+      align-items: start;
     }
+
 
     .ai-controls-panel {
       background: rgba(10, 13, 20, 0.6);
@@ -1029,17 +1031,15 @@
     .tickets-container {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      max-height: 860px;
-      overflow-y: auto;
-      padding-right: 6px;
+      gap: 8px;
     }
+
 
     .ticket-card {
       background: rgba(20, 24, 34, 0.7);
       border: 1px solid var(--border-color);
-      border-radius: 14px;
-      padding: 12px 18px;
+      border-radius: 12px;
+      padding: 10px 14px;
       transition: all 0.25s ease;
       animation: fadeInTicket 0.4s ease forwards;
     }
@@ -1060,9 +1060,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
     }
 
 
@@ -1074,15 +1074,15 @@
 
     .ticket-badge-num {
       font-family: 'Outfit', sans-serif;
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 700;
       color: var(--gold-primary);
     }
 
     .ticket-score-badge {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 700;
-      padding: 3px 10px;
+      padding: 2px 8px;
       border-radius: 20px;
       background: rgba(16, 185, 129, 0.15);
       color: #34d399;
@@ -1090,39 +1090,40 @@
     }
 
     .ticket-metrics {
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
       display: flex;
-      gap: 12px;
+      gap: 10px;
     }
 
     .ticket-balls-wrap {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
+      gap: 8px;
+      margin-bottom: 6px;
       flex-wrap: wrap;
     }
 
     .ticket-balls-z1 {
       display: flex;
-      gap: 8px;
+      gap: 6px;
     }
 
     .ai-ball {
-      width: 40px;
-      height: 40px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'Outfit', sans-serif;
-      font-size: 1.05rem;
+      font-size: 0.95rem;
       font-weight: 700;
       color: #ffffff;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
       transition: transform 0.2s ease;
     }
+
 
     .ai-ball:hover {
       transform: scale(1.1);
