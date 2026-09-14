@@ -87,6 +87,34 @@ COLOR_BLUE = "#3b82f6"
 COLOR_BORDER = "#2b3448"
 
 
+def get_next_draw_info():
+    """計算威力彩下一期預計開獎日期與星期 (每週一、四 20:30 開獎)"""
+    now = datetime.now()
+    weekday_names = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
+    cur_w = now.weekday()  # 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+    draw_time_passed = (now.hour > 20) or (now.hour == 20 and now.minute >= 30)
+
+    if cur_w == 0:     # Mon
+        days_ahead = 0 if not draw_time_passed else 3
+    elif cur_w == 1:   # Tue
+        days_ahead = 2
+    elif cur_w == 2:   # Wed
+        days_ahead = 1
+    elif cur_w == 3:   # Thu
+        days_ahead = 0 if not draw_time_passed else 4
+    elif cur_w == 4:   # Fri
+        days_ahead = 3
+    elif cur_w == 5:   # Sat
+        days_ahead = 2
+    else:              # Sun
+        days_ahead = 1
+
+    from datetime import timedelta
+    target = now + timedelta(days=days_ahead)
+    w_str = weekday_names[target.weekday()]
+    return f"{target.strftime('%Y-%m-%d')} ({w_str}) 20:30"
+
+
 class LottoBall(tk.Canvas):
     """繪製具有立體光影質感的樂透號碼球"""
     def __init__(self, parent, number, is_special=False, size=44, bg=COLOR_CARD, **kwargs):
@@ -303,6 +331,9 @@ class TaiwanLottoApp(tk.Tk):
 
         self.lbl_selected_date = tk.Label(self.info_left, text="開獎日期: --", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_MUTED)
         self.lbl_selected_date.pack(anchor="w")
+
+        self.lbl_next_draw = tk.Label(self.info_left, text=f"📅 下期預計開獎: {get_next_draw_info()}", font=("Microsoft JhengHei UI", 9.5, "bold"), bg=COLOR_CARD, fg=COLOR_TEAL)
+        self.lbl_next_draw.pack(anchor="w", pady=(3, 0))
 
         # 中間：3D 彩球排
         self.balls_container = tk.Frame(self.showcase_frame, bg=COLOR_CARD)
@@ -613,6 +644,7 @@ class TaiwanLottoApp(tk.Tk):
 
         self.lbl_selected_period.config(text=f"第 {period} 期")
         self.lbl_selected_date.config(text=f"開獎日: {date_str}")
+        self.lbl_next_draw.config(text=f"📅 下期預計開獎: {get_next_draw_info()}")
 
         draw_appear = item.get("drawNumberAppear", [])
         for i in range(6):

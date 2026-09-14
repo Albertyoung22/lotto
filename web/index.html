@@ -215,12 +215,27 @@
       display: flex;
       align-items: baseline;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
     .hero-date {
       font-size: 1rem;
       color: var(--text-muted);
       font-weight: 400;
+    }
+
+    .next-draw-badge {
+      font-size: 0.88rem;
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+      font-weight: 600;
+      color: var(--emerald-primary);
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .hero-jackpot-badge {
@@ -1571,6 +1586,7 @@
           <div class="hero-period" id="heroPeriod">
             第 <span id="valPeriod">--</span> 期
             <span class="hero-date" id="valDate">開獎日期: ----/--/--</span>
+            <span class="next-draw-badge" id="valNextDraw">📅 下期預計開獎: ----/--/-- (星期X) 20:30</span>
           </div>
         </div>
         <div class="hero-jackpot-badge">
@@ -1838,8 +1854,44 @@
     let activeYear = 'all';
     let selectedBallFilter = null;
 
+    function getNextDrawDateInfo() {
+      const now = new Date();
+      const weekdayNames = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+      const day = now.getDay();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const drawTimePassed = (hours > 20) || (hours === 20 && minutes >= 30);
+
+      let daysAhead = 0;
+      if (day === 1) {        // Mon
+        daysAhead = drawTimePassed ? 3 : 0;
+      } else if (day === 2) { // Tue
+        daysAhead = 2;
+      } else if (day === 3) { // Wed
+        daysAhead = 1;
+      } else if (day === 4) { // Thu
+        daysAhead = drawTimePassed ? 4 : 0;
+      } else if (day === 5) { // Fri
+        daysAhead = 3;
+      } else if (day === 6) { // Sat
+        daysAhead = 2;
+      } else if (day === 0) { // Sun
+        daysAhead = 1;
+      }
+
+      const target = new Date(now);
+      target.setDate(now.getDate() + daysAhead);
+      const year = target.getFullYear();
+      const month = String(target.getMonth() + 1).padStart(2, '0');
+      const date = String(target.getDate()).padStart(2, '0');
+      const wStr = weekdayNames[target.getDay()];
+
+      return `${year}-${month}-${date} (${wStr}) 20:30`;
+    }
+
     // 頁面加載後抓取資料
     window.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('valNextDraw').innerText = `📅 下期預計開獎: ${getNextDrawDateInfo()}`;
       initZipModalYears();
       await loadData();
       await checkAiStatus();
