@@ -20,6 +20,11 @@ if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
 from flask import Flask, render_template, request, jsonify, send_file
+try:
+    from flask_cors import CORS
+    HAS_CORS = True
+except ImportError:
+    HAS_CORS = False
 
 # 導入爬蟲與 AI 運籌核心模組
 from taiwan_lottery import (
@@ -43,6 +48,9 @@ app = Flask(
     template_folder=WEB_DIR,
     static_folder=os.path.join(WEB_DIR, "static")
 )
+if HAS_CORS:
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
+
 
 def ensure_data_exists():
     """若資料庫檔案尚不存在，則自動從台彩官方 API 抓取歷史獎號 (2024~至今)"""
