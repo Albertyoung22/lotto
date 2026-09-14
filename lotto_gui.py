@@ -16,7 +16,9 @@ import json
 import csv
 import threading
 import time
+import webbrowser
 from datetime import datetime
+
 from collections import Counter, defaultdict
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
@@ -133,9 +135,10 @@ class TaiwanLottoApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("台灣彩券 · 威力彩大數據歷史系統與 AI 運籌預測系統")
-        self.geometry("1240x860")
-        self.minsize(1040, 720)
+        self.geometry("1280x920")
+        self.minsize(1080, 760)
         self.configure(bg=COLOR_BG)
+
 
         # 狀態資料
         self.records = []
@@ -213,32 +216,36 @@ class TaiwanLottoApp(tk.Tk):
         self.build_stats_tab()
 
     def create_top_bar(self):
-        top_bar = tk.Frame(self, bg=COLOR_HEADER, padx=20, pady=10)
+        top_bar = tk.Frame(self, bg=COLOR_HEADER, padx=16, pady=6)
         top_bar.pack(side="top", fill="x")
 
         # 標題
         title_box = tk.Frame(top_bar, bg=COLOR_HEADER)
-        title_box.pack(side="left", padx=(0, 20))
-        tk.Label(title_box, text="🎱 台灣彩券 · 威力彩大數據與 AI 運籌系統", font=("Microsoft JhengHei UI", 15, "bold"), bg=COLOR_HEADER, fg=COLOR_GOLD).pack(anchor="w")
+        title_box.pack(side="left", padx=(0, 16))
+        tk.Label(title_box, text="🎱 台灣彩券 · 威力彩大數據與 AI 運籌系統", font=("Microsoft JhengHei UI", 14, "bold"), bg=COLOR_HEADER, fg=COLOR_GOLD).pack(anchor="w")
 
         # 年份選單與同步按鈕
         cur_year = datetime.now().year
         year_options = ["全期別 (2024~至今)"] + [str(y) for y in range(cur_year, 2023, -1)]
         self.year_combo = ttk.Combobox(top_bar, values=year_options, width=15, state="readonly")
         self.year_combo.current(0)
-        self.year_combo.pack(side="left", padx=(0, 8))
+        self.year_combo.pack(side="left", padx=(0, 6))
 
         self.btn_fetch = ttk.Button(top_bar, text="🔄 同步最新獎號", style="Primary.TButton", command=self.on_start_download)
-        self.btn_fetch.pack(side="left", padx=(0, 8))
+        self.btn_fetch.pack(side="left", padx=(0, 6))
 
-        self.btn_csv = ttk.Button(top_bar, text="📊 匯出 CSV", style="Success.TButton", command=self.export_csv)
+        self.btn_web = ttk.Button(top_bar, text="🌐 開啟 Web 儀表板", style="Success.TButton", command=self.open_web_dashboard)
+        self.btn_web.pack(side="left", padx=(0, 6))
+
+        self.btn_csv = ttk.Button(top_bar, text="📊 匯出 CSV", style="Secondary.TButton", command=self.export_csv)
         self.btn_csv.pack(side="left", padx=(0, 6))
 
         self.btn_json = ttk.Button(top_bar, text="📄 匯出 JSON", style="Secondary.TButton", command=self.export_json)
-        self.btn_json.pack(side="left", padx=(0, 8))
+        self.btn_json.pack(side="left", padx=(0, 6))
 
         self.btn_zip = ttk.Button(top_bar, text="📦 官方歷年 ZIP", style="Secondary.TButton", command=self.prompt_download_zip)
         self.btn_zip.pack(side="left")
+
 
         # 右側：求解引擎狀態指示徽章
         ortools_status = check_ortools_status() if check_ortools_status else {"available": False}
@@ -249,13 +256,14 @@ class TaiwanLottoApp(tk.Tk):
             engine_text = "🟡 啟發式約束優化器 (建議: pip install ortools)"
             badge_fg = COLOR_GOLD
 
-        self.lbl_engine_badge = tk.Label(top_bar, text=engine_text, font=("Segoe UI", 9, "bold"), bg=COLOR_CARD, fg=badge_fg, padx=12, pady=5, relief="groove")
+        self.lbl_engine_badge = tk.Label(top_bar, text=engine_text, font=("Segoe UI", 9, "bold"), bg=COLOR_CARD, fg=badge_fg, padx=10, pady=4, relief="groove")
         self.lbl_engine_badge.pack(side="right")
 
     def create_showcase(self):
         """頂部精選開獎 Showcase 看板"""
-        self.showcase_frame = tk.Frame(self, bg=COLOR_CARD, padx=20, pady=10, highlightbackground=COLOR_BORDER, highlightthickness=1)
-        self.showcase_frame.pack(side="top", fill="x", padx=16, pady=(10, 4))
+        self.showcase_frame = tk.Frame(self, bg=COLOR_CARD, padx=16, pady=6, highlightbackground=COLOR_BORDER, highlightthickness=1)
+        self.showcase_frame.pack(side="top", fill="x", padx=16, pady=(6, 2))
+
 
         # 左側：期別與日期
         self.info_left = tk.Frame(self.showcase_frame, bg=COLOR_CARD)
@@ -388,8 +396,16 @@ class TaiwanLottoApp(tk.Tk):
         self.ai_canvas.configure(yscrollcommand=self.ai_scrollbar.set)
         self.ai_canvas.bind('<Configure>', lambda e: self.ai_canvas.itemconfig(self.ai_canvas_window, width=e.width))
 
+        # 滑鼠滾輪支援 (當滑鼠指針移入 Canvas 時開啟滾輪)
+        def _on_ai_mousewheel(event):
+            self.ai_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        self.ai_canvas.bind("<Enter>", lambda e: self.ai_canvas.bind_all("<MouseWheel>", _on_ai_mousewheel))
+        self.ai_canvas.bind("<Leave>", lambda e: self.ai_canvas.unbind_all("<MouseWheel>"))
+
         self.ai_canvas.pack(side="left", fill="both", expand=True)
         self.ai_scrollbar.pack(side="right", fill="y")
+
 
     # ==========================================
     # 頁籤 2: 📋 各期歷史獎號資料庫清單佈局
@@ -868,52 +884,66 @@ class TaiwanLottoApp(tk.Tk):
             return
 
         for idx, t in enumerate(tickets):
-            card = tk.Frame(self.ai_scrollable_frame, bg=COLOR_CARD, padx=16, pady=12, highlightbackground=COLOR_BORDER, highlightthickness=1)
-            card.pack(fill="x", pady=5, padx=4)
+            card = tk.Frame(self.ai_scrollable_frame, bg=COLOR_CARD, padx=12, pady=6, highlightbackground=COLOR_BORDER, highlightthickness=1)
+            card.pack(fill="x", pady=2, padx=4)
 
-            # 卡片頂部
-            card_header = tk.Frame(card, bg=COLOR_CARD)
-            card_header.pack(fill="x", pady=(0, 6))
+            # 第一列：注號、評分、3D彩球排、統計數據、複製按鈕
+            row_main = tk.Frame(card, bg=COLOR_CARD)
+            row_main.pack(fill="x")
 
+            # 1. 右側複製按鈕優先排列
+            btn_copy_single = ttk.Button(row_main, text="📋 複製此注", style="Secondary.TButton", command=lambda cur_t=t: self.copy_single_ticket(cur_t))
+            btn_copy_single.pack(side="right", padx=(4, 0))
+
+            # 2. 注號與評分
             t_no = t.get("ticket_no", idx + 1)
             score = t.get("score", 90)
-            tk.Label(card_header, text=f"第 {t_no:02d} 注", font=("Segoe UI", 12, "bold"), bg=COLOR_CARD, fg=COLOR_GOLD).pack(side="left")
+            tk.Label(row_main, text=f"第 {t_no:02d} 注", font=("Segoe UI", 11, "bold"), bg=COLOR_CARD, fg=COLOR_GOLD).pack(side="left")
 
-            score_badge = tk.Label(card_header, text=f"🌟 綜合評分: {score} 分", font=("Microsoft JhengHei UI", 9, "bold"), bg="#1e3a2f", fg="#34d399", padx=8, pady=2)
-            score_badge.pack(side="left", padx=10)
+            score_badge = tk.Label(row_main, text=f"🌟 {score}分", font=("Microsoft JhengHei UI", 8, "bold"), bg="#1e3a2f", fg="#34d399", padx=5, pady=1)
+            score_badge.pack(side="left", padx=6)
 
-            metrics_text = f"和值: {t.get('sum', '--')}  |  奇偶: {t.get('odd_even', '--')}  |  大小: {t.get('high_low', '--')}"
-            tk.Label(card_header, text=metrics_text, font=("Segoe UI", 9), bg=COLOR_CARD, fg=COLOR_MUTED).pack(side="left")
-
-            btn_copy_single = ttk.Button(card_header, text="📋 複製此注", style="Secondary.TButton", command=lambda cur_t=t: self.copy_single_ticket(cur_t))
-            btn_copy_single.pack(side="right")
-
-            # 球號列 (6 金球 + 1 紅球)
-            balls_row = tk.Frame(card, bg=COLOR_CARD)
-            balls_row.pack(anchor="w", pady=4)
+            # 3. 中間 3D 彩球排 (直徑 28px 精緻小球)
+            balls_row = tk.Frame(row_main, bg=COLOR_CARD)
+            balls_row.pack(side="left", padx=6)
 
             z1 = t.get("zone1", [])
             for num in z1:
-                ball = LottoBall(balls_row, number=num, is_special=False, size=38, bg=COLOR_CARD)
-                ball.pack(side="left", padx=3)
+                ball = LottoBall(balls_row, number=num, is_special=False, size=28, bg=COLOR_CARD)
+                ball.pack(side="left", padx=1)
 
-            sep = tk.Label(balls_row, text="+", font=("Segoe UI", 16, "bold"), bg=COLOR_CARD, fg=COLOR_MUTED)
-            sep.pack(side="left", padx=5)
+            sep = tk.Label(balls_row, text="+", font=("Segoe UI", 12, "bold"), bg=COLOR_CARD, fg=COLOR_MUTED)
+            sep.pack(side="left", padx=3)
 
             z2 = t.get("zone2", "--")
-            ball_z2 = LottoBall(balls_row, number=z2, is_special=True, size=38, bg=COLOR_CARD)
-            ball_z2.pack(side="left", padx=3)
+            ball_z2 = LottoBall(balls_row, number=z2, is_special=True, size=28, bg=COLOR_CARD)
+            ball_z2.pack(side="left", padx=1)
 
-            # 決策理由與特徵標籤
+            # 4. 指標
+            metrics_text = f"和值:{t.get('sum', '--')} | 奇偶:{t.get('odd_even', '--')} | 大小:{t.get('high_low', '--')}"
+            tk.Label(row_main, text=metrics_text, font=("Segoe UI", 8), bg=COLOR_CARD, fg=COLOR_MUTED).pack(side="left", padx=4)
+
+            # 第二列：AI 特徵標籤
             reasons = t.get("reasons", [])
             engine_name = t.get("engine", "AI 運籌最佳化")
             reasons_row = tk.Frame(card, bg=COLOR_CARD)
-            reasons_row.pack(anchor="w", pady=(6, 0))
+            reasons_row.pack(anchor="w", pady=(2, 0))
 
-            tk.Label(reasons_row, text=f"⚙️ {engine_name} 特徵:", font=("Microsoft JhengHei UI", 8), bg=COLOR_CARD, fg=COLOR_MUTED).pack(side="left", padx=(0, 4))
+            tk.Label(reasons_row, text=f"⚙️ {engine_name}:", font=("Microsoft JhengHei UI", 8), bg=COLOR_CARD, fg=COLOR_MUTED).pack(side="left", padx=(0, 4))
             for r in reasons:
-                lbl_tag = tk.Label(reasons_row, text=f"[{r}]", font=("Microsoft JhengHei UI", 8), bg=COLOR_HEADER, fg=COLOR_GOLD_LIGHT, padx=5, pady=1)
-                lbl_tag.pack(side="left", padx=3)
+                lbl_tag = tk.Label(reasons_row, text=f"[{r}]", font=("Microsoft JhengHei UI", 8), bg=COLOR_HEADER, fg=COLOR_GOLD_LIGHT, padx=4, pady=0)
+                lbl_tag.pack(side="left", padx=2)
+
+        # 底部留白區域，保障滾動到底部時第 5 注絕不被遮擋
+        bottom_spacer = tk.Frame(self.ai_scrollable_frame, bg=COLOR_BG, height=40)
+        bottom_spacer.pack(fill="x", pady=10)
+
+        # 強制刷新 Canvas 滾動範圍與置頂
+        self.ai_scrollable_frame.update_idletasks()
+        self.ai_canvas.configure(scrollregion=self.ai_canvas.bbox("all"))
+        self.ai_canvas.yview_moveto(0)
+
+
 
     def copy_single_ticket(self, t):
         z1_str = " ".join(f"{n:02d}" for n in t.get("zone1", []))
@@ -1048,6 +1078,53 @@ class TaiwanLottoApp(tk.Tk):
             messagebox.showinfo("下載成功", f"{year} 年度官方開獎總表已下載並解壓縮至：\n{os.path.abspath('./downloads/' + str(year))}")
         else:
             messagebox.showerror("下載失敗", f"無法下載 {year} 年度 ZIP 壓縮檔，請稍候重試。")
+
+    def open_web_dashboard(self):
+        """一鍵自動偵測/啟動背景 Web 伺服器並使用本機真實區網 IP (LAN IP) 開啟瀏覽器"""
+        import subprocess
+        import urllib.request
+        import socket
+
+        # 取得電腦真實區域網路 IP (例如 192.168.1.X)
+        def get_real_local_ip():
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.settimeout(0.1)
+                s.connect(('8.8.8.8', 80))
+                ip = s.getsockname()[0]
+                s.close()
+                return ip
+            except Exception:
+                try:
+                    return socket.gethostbyname(socket.gethostname())
+                except Exception:
+                    return "127.0.0.1"
+
+        real_ip = get_real_local_ip()
+        web_url = f"http://{real_ip}:5000"
+        check_url = "http://127.0.0.1:5000"
+
+        def is_server_alive():
+            try:
+                req = urllib.request.Request(f"{check_url}/health", headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=1) as resp:
+                    return resp.status == 200
+            except Exception:
+                return False
+
+        if not is_server_alive():
+            try:
+                script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.py")
+                creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
+                subprocess.Popen([sys.executable, script_path], creationflags=creation_flags)
+                time.sleep(1.5)
+            except Exception as ex:
+                print("自動啟動 Web 伺服器失敗:", ex)
+
+        webbrowser.open(web_url)
+
+
+
 
 
 def launch_gui():

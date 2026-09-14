@@ -161,14 +161,29 @@ def health_check():
 if __name__ == "__main__":
     ensure_data_exists()
 
-    # 讀取環境變數 PORT (Render 雲端平台會動態注入此變數，預設 5000)
     port = int(os.environ.get("PORT", 5000))
+
+    import socket
+    def get_real_local_ip():
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.settimeout(0.1)
+            s.connect(('8.8.8.8', 80))
+            ip = s.getsockname()[0]
+            s.close()
+            return ip
+        except Exception:
+            return "127.0.0.1"
+
+    real_ip = get_real_local_ip()
 
     print("=" * 65)
     print(" 台灣彩券 · 威力彩 Flask Web 視覺化伺服器已就緒")
     print(f" 監聽位址: http://0.0.0.0:{port}")
-    print(f" 本地訪問: http://127.0.0.1:{port}")
+    print(f" 本地存取: http://127.0.0.1:{port}")
+    print(f" 區網真實 IP 存取: http://{real_ip}:{port}")
     print("=" * 65)
+
 
     # 優先嘗試以 Waitress 高性能 WSGI 伺服器啟動 (生產級標準)
     try:
