@@ -189,10 +189,16 @@ class TaiwanLottoApp(tk.Tk):
 
         if os.path.exists(icon_path):
             try:
-                self.icon_img = tk.PhotoImage(file=icon_path)
+                from PIL import Image, ImageTk
+                img = Image.open(icon_path)
+                self.icon_img = ImageTk.PhotoImage(img)
                 self.iconphoto(True, self.icon_img)
-            except Exception as e:
-                print("載入 Icon 失敗:", e)
+            except Exception:
+                try:
+                    self.icon_img = tk.PhotoImage(file=icon_path)
+                    self.iconphoto(True, self.icon_img)
+                except Exception as e:
+                    print("載入 Icon 失敗:", e)
 
 
 
@@ -332,7 +338,7 @@ class TaiwanLottoApp(tk.Tk):
         self.lbl_selected_date = tk.Label(self.info_left, text="開獎日期: --", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_MUTED)
         self.lbl_selected_date.pack(anchor="w")
 
-        self.lbl_next_draw = tk.Label(self.info_left, text=f"📅 下期預計開獎: {get_next_draw_info()}", font=("Microsoft JhengHei UI", 9.5, "bold"), bg=COLOR_CARD, fg=COLOR_TEAL)
+        self.lbl_next_draw = tk.Label(self.info_left, text=f"📅 下期預計開獎: {get_next_draw_info()}", font=("Microsoft JhengHei UI", 10, "bold"), bg=COLOR_CARD, fg=COLOR_TEAL)
         self.lbl_next_draw.pack(anchor="w", pady=(3, 0))
 
         # 中間：3D 彩球排
