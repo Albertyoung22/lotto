@@ -1080,7 +1080,7 @@ class TaiwanLottoApp(tk.Tk):
             messagebox.showerror("下載失敗", f"無法下載 {year} 年度 ZIP 壓縮檔，請稍候重試。")
 
     def open_web_dashboard(self):
-        """一鍵自動偵測/啟動背景 Web 伺服器並使用本機真實區網 IP (LAN IP) 開啟瀏覽器"""
+        """一鍵自動清理舊伺服器、重啟背景 Web 伺服器並使用本機真實區網 IP (LAN IP) 開啟瀏覽器"""
         import subprocess
         import urllib.request
         import socket
@@ -1100,28 +1100,41 @@ class TaiwanLottoApp(tk.Tk):
                 except Exception:
                     return "127.0.0.1"
 
+        def kill_old_server_process():
+            """清理背景佔用 5000 埠口的舊版伺服器進程"""
+            try:
+                if os.name == 'nt':
+                    output = subprocess.check_output('netstat -ano | findstr :5000', shell=True).decode('utf-8', errors='ignore')
+                    pids = set()
+                    for line in output.strip().splitlines():
+                        parts = line.split()
+                        if len(parts) >= 5 and 'LISTENING' in line:
+                            pids.add(parts[-1])
+                    for pid in pids:
+                        if pid != '0':
+                            subprocess.run(f'taskkill /F /PID {pid}', shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception:
+                pass
+
         real_ip = get_real_local_ip()
         web_url = f"http://{real_ip}:5000"
-        check_url = "http://127.0.0.1:5000"
 
-        def is_server_alive():
-            try:
-                req = urllib.request.Request(f"{check_url}/health", headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=1) as resp:
-                    return resp.status == 200
-            except Exception:
-                return False
+        # 1. 強制關閉背景運行的舊版 5000 埠口伺服器
+        kill_old_server_process()
+        time.sleep(0.5)
 
-        if not is_server_alive():
-            try:
-                script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.py")
-                creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
-                subprocess.Popen([sys.executable, script_path], creationflags=creation_flags)
-                time.sleep(1.5)
-            except Exception as ex:
-                print("自動啟動 Web 伺服器失敗:", ex)
+        # 2. 重新啟動最新的 app.py 伺服器
+        try:
+            script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.py")
+            creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
+            subprocess.Popen([sys.executable, script_path], creationflags=creation_flags)
+            time.sleep(1.8)
+        except Exception as ex:
+            print("自動啟動 Web 伺服器失敗:", ex)
 
+        # 3. 在預設瀏覽器開啟最新的真實 IP Web 網址
         webbrowser.open(web_url)
+
 
 
 
