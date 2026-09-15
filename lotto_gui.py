@@ -1319,8 +1319,21 @@ class TaiwanLottoApp(tk.Tk):
             score = t.get("score", 90)
             tk.Label(row_main, text=f"第 {t_no:02d} 注", font=("Segoe UI", 11, "bold"), bg=COLOR_CARD, fg=COLOR_GOLD).pack(side="left")
 
+            strat_name = t.get("strategy", "")
+            if strat_name:
+                strat_colors = {
+                    "balanced": ("#1e3a8a", "#93c5fd"),
+                    "hot_streak": ("#7c2d12", "#fdba74"),
+                    "cold_reversal": ("#4c1d95", "#c4b5fd"),
+                    "pattern_defense": ("#064e3b", "#6ee7b7"),
+                    "black_swan": ("#701a75", "#f472b6")
+                }
+                bg_c, fg_c = strat_colors.get(t.get("strategy_id", ""), ("#2a2d3d", COLOR_GOLD))
+                lbl_strat = tk.Label(row_main, text=strat_name, font=("Microsoft JhengHei UI", 8, "bold"), bg=bg_c, fg=fg_c, padx=5, pady=1)
+                lbl_strat.pack(side="left", padx=4)
+
             score_badge = tk.Label(row_main, text=f"🌟 {score}分", font=("Microsoft JhengHei UI", 8, "bold"), bg="#1e3a2f", fg="#34d399", padx=5, pady=1)
-            score_badge.pack(side="left", padx=6)
+            score_badge.pack(side="left", padx=4)
 
             # 3. 中間 3D 彩球排 (直徑 28px 精緻小球)
             balls_row = tk.Frame(row_main, bg=COLOR_CARD)

@@ -196,6 +196,16 @@ class LottoAnalyzer:
             else:
                 self.zone2_omission[n] = self.total_draws
 
+        # 紀錄上期開獎獎號 (供連莊號、鄰號與模式防禦使用)
+        if self.records:
+            last_rec = self.records[-1]
+            last_balls = last_rec.get("drawNumberSize", [])
+            self.last_draw_z1 = set(last_balls[:self.balls_count])
+            self.last_draw_z2 = last_balls[self.balls_count] if len(last_balls) > self.balls_count else None
+        else:
+            self.last_draw_z1 = set()
+            self.last_draw_z2 = None
+
     def get_summary(self) -> dict:
         """取得統計特徵摘要"""
         fallback_avg = 150.0 if self.is_lotto649 else 117.0
@@ -224,36 +234,127 @@ class LottoAnalyzer:
         }
 
     def compute_ball_weights(self) -> tuple:
-        """計算第一區與第二區每顆球的綜合潛力權重 (轉為整數供運籌求解器使用)"""
+        """計算預設第一區與第二區每顆球的綜合潛力權重"""
+        return self.compute_ball_weights_by_strategy("balanced")
+
+    def compute_ball_weights_by_strategy(self, strategy_id: str = "balanced") -> tuple:
+        """依據五大特定投資組合策略計算第一區與第二區球號權重"""
         weights_z1 = {}
         max_freq = max(self.zone1_freq.values()) if self.zone1_freq else 1
+        min_digit = 0 if self.game_type in ["3star", "4star"] else 1
+        last_z1 = getattr(self, "last_draw_z1", set())
 
-        for n in range(1, self.max_ball_z1 + 1):
-            freq_score = (self.zone1_freq[n] / max_freq) * 45
-            recent_score = (self.zone1_recent_freq[n] / (max_freq * 1.5 + 1e-5)) * 25
-            
-            # 遺漏適中 (常態分佈，太短或極端長適度補償)
-            omiss = self.zone1_omission[n]
-            if 3 <= omiss <= 12:
-                omiss_score = 25
-            elif omiss > 12:
-                omiss_score = 18
+        for n in range(min_digit, self.max_ball_z1 + 1):
+            freq_ratio = self.zone1_freq[n] / max_freq
+            recent_ratio = self.zone1_recent_freq[n] / (max_freq * 1.5 + 1e-5)
+            omiss = self.zone1_omission.get(n, 0)
+
+            if strategy_id == "hot_streak":
+                # 🔥 熱門動能追旺：重壓近 15 期活躍號、連莊號與鄰號
+                score = (recent_ratio * 65) + (freq_ratio * 20)
+                if n in last_z1:
+                    score += 25  # 連莊號加成
+                if (n - 1 in last_z1) or (n + 1 in last_z1):
+                    score += 15  # 鄰號加成
+                if omiss <= 2:
+                    score += 20  # 熱度未消退
+                elif omiss >= 10:
+                    score -= 15  # 抑制長冷號
+
+            elif strategy_id == "cold_reversal":
+                # ⏳ 深度遺漏回補：專攻極限遺漏與均值回歸
+                if omiss >= 15:
+                    omiss_bonus = 60
+                elif omiss >= 8:
+                    omiss_bonus = 45
+                elif omiss >= 4:
+                    omiss_bonus = 20
+                else:
+                    omiss_bonus = 5
+                score = (freq_ratio * 20) + omiss_bonus
+                if n in last_z1:
+                    score -= 20  # 刻意避開剛開出號碼
+
+            elif strategy_id == "pattern_defense":
+                # ⚡ 等差數列與偏態防禦：專攻等差公差 (如 10,12,14) 與偏偶數/偏奇數
+                pair_bonus = 0
+                if (n - 2) in self.zone1_freq or (n + 2) in self.zone1_freq:
+                    pair_bonus += 20
+                if n % 2 == 0:
+                    pair_bonus += 12  # 增加偶數權重，防禦極端偶數群
+                score = (freq_ratio * 30) + (recent_ratio * 20) + pair_bonus + random.uniform(5, 15)
+
+            elif strategy_id == "black_swan":
+                # 🌪️ 黑天鵝激進探索：非線性混沌模型，專攻冷門長尾離群值
+                inv_freq = (1.0 - (self.zone1_freq[n] / (max_freq + 1e-5))) * 45
+                chaos_omiss = (omiss % 7) * 8
+                score = inv_freq + chaos_omiss + random.uniform(10, 30)
+
             else:
-                omiss_score = 12
+                # 💎 旗艦精準平衡 (balanced)
+                freq_score = freq_ratio * 45
+                recent_score = recent_ratio * 25
+                if 3 <= omiss <= 12:
+                    omiss_score = 25
+                elif omiss > 12:
+                    omiss_score = 18
+                else:
+                    omiss_score = 12
+                score = freq_score + recent_score + omiss_score
 
-            total_w = int(freq_score + recent_score + omiss_score + random.uniform(0, 5))
-            weights_z1[n] = max(10, total_w)
+            total_w = int(max(10, score + random.uniform(0, 6)))
+            weights_z1[n] = total_w
 
-        # 第二區 / 特別號權重
+        # 第二區特別號權重 (亦針對策略自適應)
         weights_z2 = {}
         max_freq_z2 = max(self.zone2_freq.values()) if self.zone2_freq else 1
-        for n in range(1, self.max_ball_z2 + 1):
+        for n in range(1, max(1, self.max_ball_z2) + 1):
             f_score = (self.zone2_freq[n] / max_freq_z2) * 60
-            omiss_z2 = self.zone2_omission[n]
-            omiss_score_z2 = 30 if 2 <= omiss_z2 <= 10 else 15
+            omiss_z2 = self.zone2_omission.get(n, 0)
+            if strategy_id == "cold_reversal":
+                omiss_score_z2 = 45 if omiss_z2 >= 6 else 15
+            elif strategy_id == "hot_streak":
+                omiss_score_z2 = 40 if omiss_z2 <= 2 else 10
+            else:
+                omiss_score_z2 = 30 if 2 <= omiss_z2 <= 10 else 15
             weights_z2[n] = int(f_score + omiss_score_z2 + random.uniform(0, 5))
 
         return weights_z1, weights_z2
+
+
+STRATEGIES = [
+    {
+        "id": "balanced",
+        "name": "💎 旗艦精準平衡",
+        "tag": "常態中樞",
+        "desc": "常態期望值極大化，兼顧和值黃金帶與奇偶平衡對稱"
+    },
+    {
+        "id": "hot_streak",
+        "name": "🔥 熱門動能追旺",
+        "tag": "動能突破",
+        "desc": "鎖定近 15 期高爆發頻率球、連莊號與旺號動能突破"
+    },
+    {
+        "id": "cold_reversal",
+        "name": "⏳ 深度遺漏回補",
+        "tag": "均值反轉",
+        "desc": "均值回歸力學：專攻歷史極限遺漏與冷態爆開反彈補償"
+    },
+    {
+        "id": "pattern_defense",
+        "name": "⚡ 等差數列防禦",
+        "tag": "怪號防禦",
+        "desc": "幾何公差與偏態防禦：專攻等差公差號、同尾數與偏奇偶(防守10,12,14怪號)"
+    },
+    {
+        "id": "black_swan",
+        "name": "🌪️ 黑天鵝激進探索",
+        "tag": "黑天鵝",
+        "desc": "非線性混沌模型：打破常態拘束，專攻極端罕見冷門爆冷組合"
+    }
+]
+
 
 
 class LottoAIOptimizer:
@@ -310,6 +411,9 @@ class LottoAIOptimizer:
         chosen_patterns = []
 
         for ticket_idx in range(num_tickets):
+            strat = STRATEGIES[ticket_idx % len(STRATEGIES)]
+            weights_z1, weights_z2 = self.analyzer.compute_ball_weights_by_strategy(strat["id"])
+
             model = cp_model.CpModel()
 
             # 1. 決策變數
@@ -328,36 +432,54 @@ class LottoAIOptimizer:
                 if min_digit <= num <= max_z1:
                     model.Add(x[num] == 0)
 
-            # 5. 和值約束 (Sum Constraint)
-            model.Add(sum(i * x[i] for i in range(min_digit, max_z1 + 1)) >= sum_min)
-            model.Add(sum(i * x[i] for i in range(min_digit, max_z1 + 1)) <= sum_max)
+            # 5. 和值約束 (Sum Constraint，依策略彈性調整)
+            if strat["id"] == "black_swan":
+                s_min = max(min_digit * num_needed, sum_min - 35)
+                s_max = min(max_z1 * num_needed, sum_max + 35)
+            elif strat["id"] == "pattern_defense":
+                s_min = max(min_digit * num_needed, sum_min - 20)
+                s_max = min(max_z1 * num_needed, sum_max + 20)
+            else:
+                s_min, s_max = sum_min, sum_max
 
-            # 6. 奇偶比約束
+            model.Add(sum(i * x[i] for i in range(min_digit, max_z1 + 1)) >= s_min)
+            model.Add(sum(i * x[i] for i in range(min_digit, max_z1 + 1)) <= s_max)
+
+            # 6. 奇偶比約束 (非極端策略才強制平衡，等差防禦與黑天鵝允許偏態)
             if num_needed >= 5:
                 odd_count = sum(x[i] for i in range(min_digit, max_z1 + 1) if i % 2 == 1)
-                model.Add(odd_count >= 1)
-                model.Add(odd_count <= num_needed - 1)
+                if strat["id"] in ["pattern_defense", "black_swan"]:
+                    model.Add(odd_count >= 0)
+                    model.Add(odd_count <= num_needed)
+                else:
+                    model.Add(odd_count >= 1)
+                    model.Add(odd_count <= num_needed - 1)
 
             # 7. 大小比約束 (High/Low Balance)
             if num_needed >= 5:
                 high_count = sum(x[i] for i in range(hl_thresh, max_z1 + 1))
-                model.Add(high_count >= 1)
-                model.Add(high_count <= num_needed - 1)
+                if strat["id"] in ["pattern_defense", "black_swan"]:
+                    model.Add(high_count >= 0)
+                    model.Add(high_count <= num_needed)
+                else:
+                    model.Add(high_count >= 1)
+                    model.Add(high_count <= num_needed - 1)
 
             # 8. 連號約束
             if max_z1 > 10 and num_needed >= 5:
-                for i in range(min_digit, max_z1 - 1):
-                    model.Add(x[i] + x[i + 1] + x[i + 2] <= 2)
+                if strat["id"] not in ["pattern_defense", "black_swan"]:
+                    for i in range(min_digit, max_z1 - 1):
+                        model.Add(x[i] + x[i + 1] + x[i + 2] <= 2)
 
-            # 9. 多樣性約束
+            # 9. 多樣性約束 (包牌覆蓋率)
             for prev_balls in chosen_patterns:
                 overlap = sum(x[num] for num in prev_balls if num in x)
                 model.Add(overlap <= max(1, num_needed - 2))
 
-            # 10. 目標函數
+            # 10. 目標函數 (結合策略權重)
             obj_terms = []
             for i in range(min_digit, max_z1 + 1):
-                w = self.weights_z1.get(i, 50)
+                w = weights_z1.get(i, 50)
                 prior_usage = sum(1 for p in chosen_patterns if i in p)
                 adjusted_w = max(5, w - prior_usage * 15 + random.randint(-4, 4))
                 obj_terms.append(adjusted_w * x[i])
@@ -381,17 +503,21 @@ class LottoAIOptimizer:
                     else:
                         if self.analyzer.is_lotto649:
                             z2_candidates = [n for n in range(1, max_z2 + 1) if n not in selected_z1]
-                            z2_candidates.sort(key=lambda n: self.weights_z2.get(n, 0) + random.randint(-5, 5), reverse=True)
+                            z2_candidates.sort(key=lambda n: weights_z2.get(n, 0) + random.randint(-5, 5), reverse=True)
                         else:
-                            z2_candidates = sorted(range(1, max_z2 + 1), key=lambda n: self.weights_z2.get(n, 0) + random.randint(-5, 5), reverse=True)
+                            z2_candidates = sorted(range(1, max_z2 + 1), key=lambda n: weights_z2.get(n, 0) + random.randint(-5, 5), reverse=True)
                         selected_z2 = z2_candidates[ticket_idx % len(z2_candidates)] if z2_candidates else 1
                 else:
                     selected_z2 = None
 
-                evaluation = self._evaluate_ticket(selected_z1, selected_z2)
+                evaluation = self._evaluate_ticket(selected_z1, selected_z2, strategy=strat)
                 results.append({
                     "ticket_no": ticket_idx + 1,
-                    "engine": "AI 運籌最佳化 (CP-SAT)",
+                    "engine": f"AI 運籌最佳化 (CP-SAT · {strat['name']})",
+                    "strategy": strat["name"],
+                    "strategy_id": strat["id"],
+                    "strategy_tag": strat["tag"],
+                    "strategy_desc": strat["desc"],
                     "zone1": selected_z1,
                     "zone2": selected_z2,
                     "sum": sum(selected_z1),
@@ -402,7 +528,7 @@ class LottoAIOptimizer:
                 })
             else:
                 # 備用啟發式填充
-                fallback_res = self._heuristic_single_ticket(chosen_patterns, constraints)
+                fallback_res = self._heuristic_single_ticket(chosen_patterns, constraints, strategy=strat)
                 fallback_res["ticket_no"] = ticket_idx + 1
                 chosen_patterns.append(fallback_res["zone1"])
                 results.append(fallback_res)
@@ -410,18 +536,22 @@ class LottoAIOptimizer:
         return results
 
     def _solve_with_heuristic(self, num_tickets, constraints) -> list:
-        """在未安裝 ortools 時的純 Python 啟發式約束優化"""
+        """在未安裝 ortools 時的純 Python 啟發式多策略約束優化"""
         results = []
         chosen_patterns = []
         for i in range(num_tickets):
-            t = self._heuristic_single_ticket(chosen_patterns, constraints)
+            strat = STRATEGIES[i % len(STRATEGIES)]
+            t = self._heuristic_single_ticket(chosen_patterns, constraints, strategy=strat)
             t["ticket_no"] = i + 1
             chosen_patterns.append(t["zone1"])
             results.append(t)
         return results
 
-    def _heuristic_single_ticket(self, prev_patterns, constraints) -> dict:
-        """啟發式生成單注滿足各項約束之號碼"""
+    def _heuristic_single_ticket(self, prev_patterns, constraints, strategy=None) -> dict:
+        """啟發式生成單注滿足特定策略約束之號碼"""
+        if strategy is None:
+            strategy = STRATEGIES[0]
+
         max_z1 = self.analyzer.max_ball_z1
         max_z2 = self.analyzer.max_ball_z2
         hl_thresh = self.analyzer.high_low_threshold
@@ -430,26 +560,30 @@ class LottoAIOptimizer:
 
         locked_z1 = set(constraints.get("locked_z1", []))
         excluded_z1 = set(constraints.get("excluded_z1", []))
+
         sum_min = constraints.get("sum_min", self.analyzer.default_sum_range[0])
         sum_max = constraints.get("sum_max", self.analyzer.default_sum_range[1])
+        if strategy["id"] == "black_swan":
+            sum_min = max(min_digit * num_needed, sum_min - 35)
+            sum_max = min(max_z1 * num_needed, sum_max + 35)
+        elif strategy["id"] == "pattern_defense":
+            sum_min = max(min_digit * num_needed, sum_min - 20)
+            sum_max = min(max_z1 * num_needed, sum_max + 20)
 
+        strat_w_z1, strat_w_z2 = self.analyzer.compute_ball_weights_by_strategy(strategy["id"])
         candidates = [n for n in range(min_digit, max_z1 + 1) if n not in excluded_z1]
-        
-        # 依照權重進行機率抽樣
-        weights = [self.weights_z1.get(n, 50) for n in candidates]
 
         best_combo = None
         best_score = -1
 
-        # 蒙地卡羅約束採樣
         for _ in range(1500):
             sample = set(locked_z1)
             remaining_needed = num_needed - len(sample)
             available = [c for c in candidates if c not in sample]
-            sub_weights = [self.weights_z1.get(c, 50) for c in available]
-            
+            avail_weights = [strat_w_z1.get(c, 50) for c in available]
+
             if remaining_needed > 0 and available:
-                picked = random.choices(available, weights=sub_weights, k=remaining_needed * 2)
+                picked = random.choices(available, weights=avail_weights, k=remaining_needed * 2)
                 for p in picked:
                     sample.add(p)
                     if len(sample) == num_needed:
@@ -472,29 +606,34 @@ class LottoAIOptimizer:
             if too_similar and len(prev_patterns) > 0:
                 continue
 
-            # 計算綜合得分
-            score = sum(self.weights_z1[b] for b in balls)
+            score = sum(strat_w_z1.get(b, 50) for b in balls)
             if score > best_score:
                 best_score = score
                 best_combo = balls
 
         if not best_combo:
-            best_combo = sorted(random.sample([n for n in range(1, max_z1 + 1) if n not in excluded_z1], 6))
+            best_combo = sorted(random.sample([n for n in range(min_digit, max_z1 + 1) if n not in excluded_z1], num_needed))
 
-        # 第二區 / 特別號
+        # 第二區
         locked_z2 = constraints.get("locked_z2")
         if locked_z2 and 1 <= locked_z2 <= max_z2:
             z2 = locked_z2
-        else:
+        elif self.analyzer.has_zone2:
             if self.analyzer.is_lotto649:
                 z2_pool = [n for n in range(1, max_z2 + 1) if n not in best_combo]
-                z2 = random.choices(z2_pool, weights=[self.weights_z2[n] for n in z2_pool])[0]
+                z2 = random.choices(z2_pool, weights=[strat_w_z2.get(n, 10) for n in z2_pool])[0] if z2_pool else 1
             else:
-                z2 = random.choices(range(1, max_z2 + 1), weights=[self.weights_z2[n] for n in range(1, max_z2 + 1)])[0]
+                z2 = random.choices(range(1, max_z2 + 1), weights=[strat_w_z2.get(n, 10) for n in range(1, max_z2 + 1)])[0]
+        else:
+            z2 = None
 
-        eval_res = self._evaluate_ticket(best_combo, z2)
+        eval_res = self._evaluate_ticket(best_combo, z2, strategy=strategy)
         return {
-            "engine": "啟發式約束優化器 (Heuristic Solver)",
+            "engine": f"啟發式多策略優化 ({strategy['name']})",
+            "strategy": strategy["name"],
+            "strategy_id": strategy["id"],
+            "strategy_tag": strategy["tag"],
+            "strategy_desc": strategy["desc"],
             "zone1": best_combo,
             "zone2": z2,
             "sum": sum(best_combo),
@@ -504,48 +643,72 @@ class LottoAIOptimizer:
             "reasons": eval_res["reasons"]
         }
 
-    def _evaluate_ticket(self, z1, z2) -> dict:
-        """評估注單指標並給予 AI 評語與分數"""
+    def _evaluate_ticket(self, z1, z2, strategy=None) -> dict:
+        """評估注單指標並依據策略給予特色說明與分數"""
         reasons = []
-        score = 80
+        score = 82
+
+        strat_id = strategy["id"] if strategy else "balanced"
+        strat_name = strategy["name"] if strategy else "旗艦精準平衡"
+
+        # 加入策略核心標籤
+        reasons.append(f"【{strat_name}】{strategy['desc'] if strategy else ''}")
 
         s = sum(z1)
         if self.analyzer.is_lotto649:
             if 130 <= s <= 170:
-                score += 8
-                reasons.append(f"和值黃金區間 ({s})")
+                score += 5
+                reasons.append(f"和值黃金帶 ({s})")
             else:
-                reasons.append(f"和值 {s} (常態範圍)")
+                reasons.append(f"和值 {s}")
         else:
             if 100 <= s <= 135:
-                score += 8
-                reasons.append(f"和值黃金區間 ({s})")
+                score += 5
+                reasons.append(f"和值黃金帶 ({s})")
             else:
-                reasons.append(f"和值 {s} (常態範圍)")
+                reasons.append(f"和值 {s}")
 
         odds = sum(1 for n in z1 if n % 2 == 1)
-        if odds in (3, ):
-            score += 5
-            reasons.append("奇偶比 3:3 完美平衡")
-        elif odds in (2, 4):
-            score += 3
-            reasons.append(f"奇偶比 {odds}:{6-odds} 標準常態")
+        evens = len(z1) - odds
 
-        highs = sum(1 for n in z1 if n >= self.analyzer.high_low_threshold)
-        if highs in (3, ):
-            score += 5
-            reasons.append("大小號碼 3:3 均勻分佈")
+        if strat_id == "pattern_defense":
+            # 檢測等差公差號群 (如 10,12,14)
+            diff_two_pairs = [f"{z1[i]}-{z1[j]}" for i in range(len(z1)) for j in range(i+1, len(z1)) if z1[j] - z1[i] == 2]
+            if diff_two_pairs:
+                reasons.append(f"等差公差2連線: {', '.join(diff_two_pairs[:3])}")
+                score += 6
+            if evens >= 4 or odds >= 4:
+                reasons.append(f"偏態奇偶防守 ({odds}:{evens})")
+                score += 5
 
-        # 檢查冷熱號
-        hot_count = sum(1 for n in z1 if n in self.analyzer.zone1_freq.most_common(10))
-        if hot_count >= 2:
-            score += 4
-            reasons.append(f"包含 {hot_count} 顆高頻熱門球")
+        elif strat_id == "hot_streak":
+            last_z1 = getattr(self.analyzer, "last_draw_z1", set())
+            repeaters = [n for n in z1 if n in last_z1]
+            if repeaters:
+                reasons.append(f"連莊號伏擊 ({', '.join(str(r) for r in repeaters)})")
+                score += 5
+            reasons.append("鎖定近15期高爆發動能旺號")
 
-        score = min(98, score)
-        return {"score": score, "reasons": reasons}
+        elif strat_id == "cold_reversal":
+            cold_picks = [n for n in z1 if self.analyzer.zone1_omission.get(n, 0) >= 8]
+            if cold_picks:
+                reasons.append(f"極限遺漏反彈球 ({', '.join(str(c) for c in cold_picks[:3])})")
+                score += 6
+            reasons.append("大數均值回歸補償力學")
 
-        score = min(98, score)
+        elif strat_id == "black_swan":
+            reasons.append("打破常態約束：防守全台槓龜型長尾怪號")
+            score += 6
+
+        else:
+            if odds in (3, ):
+                score += 5
+                reasons.append("奇偶比 3:3 完美平衡")
+            elif odds in (2, 4):
+                score += 3
+                reasons.append(f"奇偶比 {odds}:{evens} 標準常態")
+
+        score = min(99, max(75, score))
         return {"score": score, "reasons": reasons}
 
 
