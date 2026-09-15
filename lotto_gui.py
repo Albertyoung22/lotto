@@ -243,7 +243,7 @@ class TaiwanLottoApp(tk.Tk):
     """威力彩全功能整合型主程式視窗"""
     def __init__(self):
         super().__init__()
-        self.title("台灣彩券 · 威力彩大數據歷史系統與 AI 運籌預測系統")
+        self.title("台灣彩券 · 全彩種大數據與 AI 運籌預測系統")
         self.geometry("1280x920")
         self.minsize(1080, 760)
         self.configure(bg=COLOR_BG)
@@ -367,7 +367,7 @@ class TaiwanLottoApp(tk.Tk):
         # 標題
         title_box = tk.Frame(top_bar, bg=COLOR_HEADER)
         title_box.pack(side="left", padx=(0, 12))
-        self.lbl_main_title = tk.Label(title_box, text="🎱 台灣彩券 · 威力彩大數據與 AI 運籌系統", font=("Microsoft JhengHei UI", 13, "bold"), bg=COLOR_HEADER, fg=COLOR_GOLD)
+        self.lbl_main_title = tk.Label(title_box, text="🎯 台灣彩券 · 全彩種大數據與 AI 運籌系統", font=("Microsoft JhengHei UI", 13, "bold"), bg=COLOR_HEADER, fg=COLOR_GOLD)
         self.lbl_main_title.pack(anchor="w")
 
         # 8 大彩種切換選單

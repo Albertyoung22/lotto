@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>台灣彩券 · 威力彩歷史獎號與數據儀表板</title>
-  <meta name="description" content="全自動抓取與下載台灣彩券威力彩各期開獎紀錄、球號統計、獎金分佈與歷史數據匯出。">
+  <title>台灣彩券 · 全彩種大數據與 AI 運籌預測系統</title>
+  <meta name="description" content="全自動抓取與分析台灣彩券各彩種（威力彩、大樂透、今彩539、三星彩、四星彩、BINGO）各期開獎紀錄、球號統計、獎金分佈與 AI 運籌學模型智慧推薦。">
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="shortcut icon" href="favicon.ico">
   <!-- Google Fonts: Inter & Outfit & Noto Sans TC -->
@@ -1756,7 +1756,7 @@
     <div class="brand-group">
       <div class="brand-logo" id="brandLogoIcon">🎱</div>
       <div>
-        <div class="brand-title" id="brandMainTitle">台灣彩券 · 威力彩歷史儀表板</div>
+        <div class="brand-title" id="brandMainTitle">台灣彩券 · 全彩種大數據與 AI 運籌系統</div>
       </div>
       <span class="brand-badge" id="brandBadgeOfficial">第 5 屆官方連線</span>
     </div>
@@ -2303,14 +2303,14 @@
     }
 
     const GAME_META = {
-      "super_lotto": { name: "威力彩", icon: "🎱", title: "台灣彩券 · 威力彩 6/38 歷史儀表板", z1_label: "🟡 第一區獎號 (1~38)", z2_label: "🔴 第二區特別號 (1~8)", max_z1: 38, max_z2: 8, sum_min: 85, sum_max: 155 },
-      "lotto649":    { name: "大樂透", icon: "💎", title: "台灣彩券 · 大樂透 6/49 歷史儀表板", z1_label: "🟡 開出號碼 (1~49)", z2_label: "🔴 特別號 (1~49)", max_z1: 49, max_z2: 49, sum_min: 115, sum_max: 185 },
-      "daily539":    { name: "今彩539", icon: "🎯", title: "台灣彩券 · 今彩539 歷史儀表板", z1_label: "🟡 開出號碼 (1~39)", z2_label: "無特別號", max_z1: 39, max_z2: 0, sum_min: 60, sum_max: 140 },
-      "lotto39m":    { name: "39樂合彩", icon: "🔢", title: "台灣彩券 · 39樂合彩 歷史儀表板", z1_label: "🟡 開出號碼 (1~39)", z2_label: "無特別號", max_z1: 39, max_z2: 0, sum_min: 60, sum_max: 140 },
-      "lotto49m":    { name: "49樂合彩", icon: "🔢", title: "台灣彩券 · 49樂合彩 歷史儀表板", z1_label: "🟡 開出號碼 (1~49)", z2_label: "無特別號", max_z1: 49, max_z2: 0, sum_min: 115, sum_max: 185 },
-      "3star":       { name: "3星彩", icon: "⭐", title: "台灣彩券 · 3星彩 歷史儀表板", z1_label: "🟡 開出數位 (0~9)", z2_label: "無特別號", max_z1: 9, max_z2: 0, sum_min: 0, sum_max: 27 },
-      "4star":       { name: "4星彩", icon: "🌟", title: "台灣彩券 · 4星彩 歷史儀表板", z1_label: "🟡 開出數位 (0~9)", z2_label: "無特別號", max_z1: 9, max_z2: 0, sum_min: 0, sum_max: 36 },
-      "bingo":       { name: "BINGO BINGO", icon: "🎰", title: "台灣彩券 · 賓果賓果 歷史儀表板", z1_label: "🟡 開出 20 號 (1~80)", z2_label: "🔴 超級獎號 (1~80)", max_z1: 80, max_z2: 80, sum_min: 600, sum_max: 1000 }
+      "super_lotto": { name: "威力彩", icon: "🎱", title: "台灣彩券 · 威力彩 6/38 大數據與 AI 運籌系統", z1_label: "🟡 第一區獎號 (1~38)", z2_label: "🔴 第二區特別號 (1~8)", max_z1: 38, max_z2: 8, sum_min: 85, sum_max: 155 },
+      "lotto649":    { name: "大樂透", icon: "💎", title: "台灣彩券 · 大樂透 6/49 大數據與 AI 運籌系統", z1_label: "🟡 開出號碼 (1~49)", z2_label: "🔴 特別號 (1~49)", max_z1: 49, max_z2: 49, sum_min: 115, sum_max: 185 },
+      "daily539":    { name: "今彩539", icon: "🎯", title: "台灣彩券 · 今彩539 大數據與 AI 運籌系統", z1_label: "🟡 開出號碼 (1~39)", z2_label: "無特別號", max_z1: 39, max_z2: 0, sum_min: 60, sum_max: 140 },
+      "lotto39m":    { name: "39樂合彩", icon: "🔢", title: "台灣彩券 · 39樂合彩 數據與 AI 運籌系統", z1_label: "🟡 開出號碼 (1~39)", z2_label: "無特別號", max_z1: 39, max_z2: 0, sum_min: 60, sum_max: 140 },
+      "lotto49m":    { name: "49樂合彩", icon: "🔢", title: "台灣彩券 · 49樂合彩 數據與 AI 運籌系統", z1_label: "🟡 開出號碼 (1~49)", z2_label: "無特別號", max_z1: 49, max_z2: 0, sum_min: 115, sum_max: 185 },
+      "3star":       { name: "3星彩", icon: "⭐", title: "台灣彩券 · 3星彩 數據與 AI 運籌系統", z1_label: "🟡 開出數位 (0~9)", z2_label: "無特別號", max_z1: 9, max_z2: 0, sum_min: 0, sum_max: 27 },
+      "4star":       { name: "4星彩", icon: "🌟", title: "台灣彩券 · 4星彩 數據與 AI 運籌系統", z1_label: "🟡 開出數位 (0~9)", z2_label: "無特別號", max_z1: 9, max_z2: 0, sum_min: 0, sum_max: 36 },
+      "bingo":       { name: "BINGO BINGO", icon: "🎰", title: "台灣彩券 · 賓果賓果大數據與 AI 運籌系統", z1_label: "🟡 開出 20 號 (1~80)", z2_label: "🔴 超級獎號 (1~80)", max_z1: 80, max_z2: 80, sum_min: 600, sum_max: 1000 }
     };
 
     async function switchGame(gameType) {
@@ -2327,6 +2327,7 @@
       // 品牌與主要看板文字
       const brandTitle = document.getElementById('brandMainTitle');
       if (brandTitle) brandTitle.innerText = meta.title;
+      document.title = `${meta.title} · 台灣彩券`;
       const brandLogo = document.getElementById('brandLogoIcon');
       if (brandLogo) brandLogo.innerText = meta.icon;
 

@@ -4,7 +4,7 @@ title 上傳至 GitHub - https://github.com/Albertyoung22/lotto
 cd /d "%~dp0"
 
 echo ======================================================================
-echo   台灣彩券 · 威力彩 Web / AI 系統 - 一鍵上傳至 GitHub
+echo   台灣彩券 · 全彩種大數據與 AI 運籌預測系統 - 一鍵上傳至 GitHub
 echo   目標儲存庫: https://github.com/Albertyoung22/lotto
 echo ======================================================================
 echo.
