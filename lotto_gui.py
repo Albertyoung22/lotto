@@ -38,6 +38,11 @@ try:
         fetch_super_lotto_by_month,
         download_official_yearly_zip,
         download_super_lotto_range,
+        fetch_lotto649_by_year,
+        fetch_lotto649_by_period,
+        fetch_lotto649_by_month,
+        download_lotto649_range,
+        parse_lotto649_record,
         save_to_csv,
         save_to_json
     )
@@ -50,6 +55,11 @@ except ImportError:
         fetch_super_lotto_by_month,
         download_official_yearly_zip,
         download_super_lotto_range,
+        fetch_lotto649_by_year,
+        fetch_lotto649_by_period,
+        fetch_lotto649_by_month,
+        download_lotto649_range,
+        parse_lotto649_record,
         save_to_csv,
         save_to_json
     )
@@ -68,8 +78,24 @@ except ImportError:
     check_ortools_status = lambda: {"available": False, "engine": "啟發式約束優化器", "install_cmd": "pip install ortools"}
     generate_predictions = None
 
-CSV_FILE = "super_lotto_history.csv"
-JSON_FILE = "super_lotto_history.json"
+GAME_NAMES = {
+    "super_lotto": "威力彩",
+    "lotto649": "大樂透",
+    "daily539": "今彩539",
+    "lotto39m": "39樂合彩",
+    "lotto49m": "49樂合彩",
+    "3star": "3星彩",
+    "4star": "4星彩",
+    "bingo": "BINGO BINGO"
+}
+
+SUPER_LOTTO_CSV = "super_lotto_history.csv"
+SUPER_LOTTO_JSON = "super_lotto_history.json"
+LOTTO649_CSV = "lotto649_history.csv"
+LOTTO649_JSON = "lotto649_history.json"
+
+CSV_FILE = SUPER_LOTTO_CSV
+JSON_FILE = SUPER_LOTTO_JSON
 
 # 配色主題 (Modern Dark & Gold)
 COLOR_BG = "#0f121a"
@@ -87,32 +113,87 @@ COLOR_BLUE = "#3b82f6"
 COLOR_BORDER = "#2b3448"
 
 
-def get_next_draw_info():
-    """計算威力彩下一期預計開獎日期與星期 (每週一、四 20:30 開獎)"""
+def get_next_draw_info(game="super_lotto"):
+    """計算下一期預計開獎日期與星期 (精確支援 8 大台灣彩券開獎時間表)"""
+    from datetime import timedelta
     now = datetime.now()
     weekday_names = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
     cur_w = now.weekday()  # 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
     draw_time_passed = (now.hour > 20) or (now.hour == 20 and now.minute >= 30)
+    g = (game or "super_lotto").lower()
 
-    if cur_w == 0:     # Mon
-        days_ahead = 0 if not draw_time_passed else 3
-    elif cur_w == 1:   # Tue
-        days_ahead = 2
-    elif cur_w == 2:   # Wed
-        days_ahead = 1
-    elif cur_w == 3:   # Thu
-        days_ahead = 0 if not draw_time_passed else 4
-    elif cur_w == 4:   # Fri
-        days_ahead = 3
-    elif cur_w == 5:   # Sat
-        days_ahead = 2
-    else:              # Sun
-        days_ahead = 1
+    if g in ["lotto649", "lotto49m", "649", "49m"]:
+        # 大樂透 / 49樂合彩：每週二、五 20:30
+        if cur_w == 1:   # Tue
+            days_ahead = 0 if not draw_time_passed else 3
+        elif cur_w == 2: # Wed
+            days_ahead = 2
+        elif cur_w == 3: # Thu
+            days_ahead = 1
+        elif cur_w == 4: # Fri
+            days_ahead = 0 if not draw_time_passed else 4
+        elif cur_w == 5: # Sat
+            days_ahead = 3
+        elif cur_w == 6: # Sun
+            days_ahead = 2
+        else:            # Mon (0)
+            days_ahead = 1
+        draw_rule = "每週二、五 20:30"
+        target = now + timedelta(days=days_ahead)
+        w_str = weekday_names[target.weekday()]
+        return f"{target.strftime('%Y-%m-%d')} ({w_str}) 20:30 [{draw_rule}]"
 
-    from datetime import timedelta
-    target = now + timedelta(days=days_ahead)
-    w_str = weekday_names[target.weekday()]
-    return f"{target.strftime('%Y-%m-%d')} ({w_str}) 20:30"
+    elif g in ["daily539", "lotto39m", "3star", "4star", "539", "39m", "3s", "4s"]:
+        # 今彩539 / 39樂合彩 / 3星彩 / 4星彩：每週一至週六 20:30 (週日休)
+        if cur_w == 6:   # Sun
+            days_ahead = 1
+        elif draw_time_passed:
+            days_ahead = 2 if cur_w == 5 else 1
+        else:
+            days_ahead = 0
+        draw_rule = "每週一~六 20:30"
+        target = now + timedelta(days=days_ahead)
+        w_str = weekday_names[target.weekday()]
+        return f"{target.strftime('%Y-%m-%d')} ({w_str}) 20:30 [{draw_rule}]"
+
+    elif g in ["bingo", "賓果"]:
+        # BINGO BINGO 天天每 5 分鐘一期 (07:05 ~ 23:55)
+        draw_rule = "天天 07:05~23:55 每5分鐘"
+        mins = now.minute
+        next_min = ((mins // 5) + 1) * 5
+        if next_min >= 60:
+            target = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+        else:
+            target = now.replace(minute=next_min, second=0, microsecond=0)
+        
+        if target.hour < 7 or (target.hour == 7 and target.minute < 5):
+            target = target.replace(hour=7, minute=5)
+        elif target.hour > 23 or (target.hour == 23 and target.minute > 55):
+            target = (now + timedelta(days=1)).replace(hour=7, minute=5, second=0, microsecond=0)
+            
+        w_str = weekday_names[target.weekday()]
+        return f"{target.strftime('%Y-%m-%d %H:%M')} ({w_str}) [{draw_rule}]"
+
+    else:
+        # 威力彩：每週一、四 20:30
+        if cur_w == 0:   # Mon
+            days_ahead = 0 if not draw_time_passed else 3
+        elif cur_w == 1: # Tue
+            days_ahead = 2
+        elif cur_w == 2: # Wed
+            days_ahead = 1
+        elif cur_w == 3: # Thu
+            days_ahead = 0 if not draw_time_passed else 4
+        elif cur_w == 4: # Fri
+            days_ahead = 3
+        elif cur_w == 5: # Sat
+            days_ahead = 2
+        else:            # Sun
+            days_ahead = 1
+        draw_rule = "每週一、四 20:30"
+        target = now + timedelta(days=days_ahead)
+        w_str = weekday_names[target.weekday()]
+        return f"{target.strftime('%Y-%m-%d')} ({w_str}) 20:30 [{draw_rule}]"
 
 
 class LottoBall(tk.Canvas):
@@ -204,6 +285,7 @@ class TaiwanLottoApp(tk.Tk):
 
 
         # 狀態資料
+        self.current_game = "super_lotto"
         self.records = []
         self.filtered_records = []
         self.analyzer = None
@@ -284,8 +366,25 @@ class TaiwanLottoApp(tk.Tk):
 
         # 標題
         title_box = tk.Frame(top_bar, bg=COLOR_HEADER)
-        title_box.pack(side="left", padx=(0, 16))
-        tk.Label(title_box, text="🎱 台灣彩券 · 威力彩大數據與 AI 運籌系統", font=("Microsoft JhengHei UI", 14, "bold"), bg=COLOR_HEADER, fg=COLOR_GOLD).pack(anchor="w")
+        title_box.pack(side="left", padx=(0, 12))
+        self.lbl_main_title = tk.Label(title_box, text="🎱 台灣彩券 · 威力彩大數據與 AI 運籌系統", font=("Microsoft JhengHei UI", 13, "bold"), bg=COLOR_HEADER, fg=COLOR_GOLD)
+        self.lbl_main_title.pack(anchor="w")
+
+        # 8 大彩種切換選單
+        self.game_options = [
+            ("super_lotto", "🎱 威力彩 (6/38)"),
+            ("lotto649",    "💎 大樂透 (6/49)"),
+            ("daily539",    "🎯 今彩539 (5/39)"),
+            ("lotto39m",    "🔢 39樂合彩"),
+            ("lotto49m",    "🔢 49樂合彩"),
+            ("3star",       "⭐ 3星彩 (000~999)"),
+            ("4star",       "🌟 4星彩 (0000~9999)"),
+            ("bingo",       "🎰 BINGO BINGO"),
+        ]
+        self.combo_game = ttk.Combobox(top_bar, values=[title for _, title in self.game_options], width=20, state="readonly")
+        self.combo_game.current(0)
+        self.combo_game.pack(side="left", padx=(0, 14))
+        self.combo_game.bind("<<ComboboxSelected>>", self.on_game_selected)
 
         # 年份選單與同步按鈕
         cur_year = datetime.now().year
@@ -354,8 +453,8 @@ class TaiwanLottoApp(tk.Tk):
             ball.pack(side="left", padx=3)
             self.ball_widgets.append(ball)
 
-        sep_lbl = tk.Label(self.balls_row, text="+", font=("Segoe UI", 18, "bold"), bg=COLOR_CARD, fg=COLOR_MUTED)
-        sep_lbl.pack(side="left", padx=5)
+        self.sep_lbl = tk.Label(self.balls_row, text="+", font=("Segoe UI", 18, "bold"), bg=COLOR_CARD, fg=COLOR_MUTED)
+        self.sep_lbl.pack(side="left", padx=5)
 
         self.special_ball = LottoBall(self.balls_row, number="--", is_special=True, size=42, bg=COLOR_CARD)
         self.special_ball.pack(side="left", padx=3)
@@ -391,24 +490,28 @@ class TaiwanLottoApp(tk.Tk):
         self.combo_ai_count.pack(fill="x", pady=(3, 8))
 
         # 必出膽碼
-        tk.Label(left_ctrl, text="📌 必選膽碼 (第一區，以逗號分隔，最多5個):", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_TEXT).pack(anchor="w")
+        self.lbl_ai_locked = tk.Label(left_ctrl, text="📌 必選膽碼 (第一區，以逗號分隔，最多5個):", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_TEXT)
+        self.lbl_ai_locked.pack(anchor="w")
         self.entry_ai_locked = ttk.Entry(left_ctrl)
         self.entry_ai_locked.pack(fill="x", pady=(3, 8))
 
         # 排除殺號
-        tk.Label(left_ctrl, text="❌ 排除殺號 (第一區，以逗號分隔):", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_TEXT).pack(anchor="w")
+        self.lbl_ai_excluded = tk.Label(left_ctrl, text="❌ 排除殺號 (第一區，以逗號分隔):", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_TEXT)
+        self.lbl_ai_excluded.pack(anchor="w")
         self.entry_ai_excluded = ttk.Entry(left_ctrl)
         self.entry_ai_excluded.pack(fill="x", pady=(3, 8))
 
         # 第二區指定特別號
-        tk.Label(left_ctrl, text="🔴 第二區特別號指定:", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_TEXT).pack(anchor="w")
+        self.lbl_ai_z2 = tk.Label(left_ctrl, text="🔴 第二區特別號指定:", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_TEXT)
+        self.lbl_ai_z2.pack(anchor="w")
         z2_opts = ["隨機/AI最佳化推薦"] + [f"{i:02d}" for i in range(1, 9)]
         self.combo_ai_z2 = ttk.Combobox(left_ctrl, values=z2_opts, state="readonly")
         self.combo_ai_z2.current(0)
         self.combo_ai_z2.pack(fill="x", pady=(3, 8))
 
         # 和值範圍
-        tk.Label(left_ctrl, text="和值區間限制 (建議 85 ~ 155):", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_TEXT).pack(anchor="w")
+        self.lbl_ai_sum = tk.Label(left_ctrl, text="和值區間限制 (建議 85 ~ 155):", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_TEXT)
+        self.lbl_ai_sum.pack(anchor="w")
         sum_row = tk.Frame(left_ctrl, bg=COLOR_CARD)
         sum_row.pack(fill="x", pady=(3, 8))
         self.entry_ai_sum_min = ttk.Entry(sum_row, width=8)
@@ -551,20 +654,23 @@ class TaiwanLottoApp(tk.Tk):
         for key, title, default_val, fg_color in kpi_defs:
             card = tk.Frame(kpi_row, bg=COLOR_CARD, padx=14, pady=10, highlightbackground=COLOR_BORDER, highlightthickness=1)
             card.pack(side="left", fill="both", expand=True, padx=4)
-            tk.Label(card, text=title, font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_MUTED).pack(anchor="w")
+            lbl_t = tk.Label(card, text=title, font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_MUTED)
+            lbl_t.pack(anchor="w")
             lbl_val = tk.Label(card, text=default_val, font=("Outfit", 15, "bold"), bg=COLOR_CARD, fg=fg_color)
             lbl_val.pack(anchor="w", pady=(2, 0))
             self.kpi_cards[key] = lbl_val
+            self.kpi_cards[key + "_title"] = lbl_t
 
-        # 下方左右分割：左側第 1 區 38 球頻率，右側特別號頻率與常態指標
+        # 下方左右分割：左側第 1 區球號頻率，右側特別號頻率與常態指標
         tables_row = tk.Frame(stats_main, bg=COLOR_BG)
         tables_row.pack(fill="both", expand=True)
 
-        # 左側：第一區 38 號開出頻率排行榜
+        # 左側：第一區號碼開出頻率排行榜
         left_frame = tk.Frame(tables_row, bg=COLOR_CARD, padx=12, pady=10, highlightbackground=COLOR_BORDER, highlightthickness=1)
         left_frame.pack(side="left", fill="both", expand=True, padx=(0, 6))
 
-        tk.Label(left_frame, text="🔥 第一區 38 顆球號歷史開出頻率與遺漏值排行", font=("Microsoft JhengHei UI", 10, "bold"), bg=COLOR_CARD, fg=COLOR_GOLD).pack(anchor="w", pady=(0, 6))
+        self.lbl_z1_stats_title = tk.Label(left_frame, text="🔥 第一區 38 顆球號歷史開出頻率與遺漏值排行", font=("Microsoft JhengHei UI", 10, "bold"), bg=COLOR_CARD, fg=COLOR_GOLD)
+        self.lbl_z1_stats_title.pack(anchor="w", pady=(0, 6))
 
         cols_z1 = ("rank", "ball", "count", "omission", "rate", "status")
         self.tree_z1_stats = ttk.Treeview(left_frame, columns=cols_z1, show="headings", height=12)
@@ -587,11 +693,12 @@ class TaiwanLottoApp(tk.Tk):
         self.tree_z1_stats.pack(side="left", fill="both", expand=True)
         scroll_z1.pack(side="right", fill="y")
 
-        # 右側：第二區特別號 1~8 號頻率 + 常態和值
+        # 右側：特別號頻率 + 常態和值
         right_frame = tk.Frame(tables_row, bg=COLOR_CARD, padx=12, pady=10, highlightbackground=COLOR_BORDER, highlightthickness=1)
         right_frame.pack(side="left", fill="both", expand=True, padx=(6, 0))
 
-        tk.Label(right_frame, text="🔴 第二區 1~8 號特別號頻率與常態分佈", font=("Microsoft JhengHei UI", 10, "bold"), bg=COLOR_CARD, fg=COLOR_RED_LIGHT).pack(anchor="w", pady=(0, 6))
+        self.lbl_z2_stats_title = tk.Label(right_frame, text="🔴 第二區 1~8 號特別號頻率與常態分佈", font=("Microsoft JhengHei UI", 10, "bold"), bg=COLOR_CARD, fg=COLOR_RED_LIGHT)
+        self.lbl_z2_stats_title.pack(anchor="w", pady=(0, 6))
 
         cols_z2 = ("ball", "count", "rate", "omission")
         self.tree_z2_stats = ttk.Treeview(right_frame, columns=cols_z2, show="headings", height=8)
@@ -614,11 +721,74 @@ class TaiwanLottoApp(tk.Tk):
     # ==========================================
     # 資料讀取與刷新機制
     # ==========================================
+    def get_game_paths(self):
+        if self.current_game == "lotto649":
+            return LOTTO649_JSON, LOTTO649_CSV
+        return SUPER_LOTTO_JSON, SUPER_LOTTO_CSV
+
+    def switch_game(self, game_type):
+        if self.is_downloading or self.is_solving:
+            return
+        self.current_game = game_type
+        is_649 = (game_type == "lotto649")
+
+        # 更新切換按鈕樣式
+        if is_649:
+            self.btn_game_super.config(bg=COLOR_CARD, fg=COLOR_MUTED)
+            self.btn_game_649.config(bg=COLOR_GOLD, fg="#000000")
+            self.title("台灣彩券 · 大樂透大數據歷史系統與 AI 運籌預測系統")
+            self.lbl_main_title.config(text="💎 台灣彩券 · 大樂透大數據與 AI 運籌系統")
+            self.tree.heading("draw_appear", text="獎號 (落球順序)")
+            self.tree.heading("draw_size", text="獎號 (大小順序)")
+            self.tree.heading("zone2", text="特別號")
+            self.lbl_ai_locked.config(text="📌 必選膽碼 (1~49，以逗號分隔，最多5個):")
+            self.lbl_ai_excluded.config(text="❌ 排除殺號 (1~49，以逗號分隔):")
+            self.lbl_ai_z2.config(text="🔴 特別號指定 (1~49):")
+            self.lbl_ai_sum.config(text="和值區間限制 (建議 115 ~ 185):")
+            z2_opts = ["隨機/AI最佳化推薦"] + [f"{i:02d}" for i in range(1, 50)]
+            self.combo_ai_z2.config(values=z2_opts)
+            self.combo_ai_z2.current(0)
+            self.entry_ai_sum_min.delete(0, "end")
+            self.entry_ai_sum_min.insert(0, "115")
+            self.entry_ai_sum_max.delete(0, "end")
+            self.entry_ai_sum_max.insert(0, "185")
+            self.lbl_z1_stats_title.config(text="🔥 49 顆獎號歷史開出頻率與遺漏值排行")
+            self.lbl_z2_stats_title.config(text="🔴 特別號 1~49 號頻率與常態分佈")
+            self.kpi_cards["top_hot_title"].config(text="最熱門球號 Top 1")
+        else:
+            self.btn_game_super.config(bg=COLOR_GOLD, fg="#000000")
+            self.btn_game_649.config(bg=COLOR_CARD, fg=COLOR_MUTED)
+            self.title("台灣彩券 · 威力彩大數據歷史系統與 AI 運籌預測系統")
+            self.lbl_main_title.config(text="🎱 台灣彩券 · 威力彩大數據與 AI 運籌系統")
+            self.tree.heading("draw_appear", text="第一區 (落球順序)")
+            self.tree.heading("draw_size", text="第一區 (大小順序)")
+            self.tree.heading("zone2", text="第二區")
+            self.lbl_ai_locked.config(text="📌 必選膽碼 (第一區 1~38，以逗號分隔，最多5個):")
+            self.lbl_ai_excluded.config(text="❌ 排除殺號 (第一區 1~38，以逗號分隔):")
+            self.lbl_ai_z2.config(text="🔴 第二區特別號指定 (1~8):")
+            self.lbl_ai_sum.config(text="和值區間限制 (建議 85 ~ 155):")
+            z2_opts = ["隨機/AI最佳化推薦"] + [f"{i:02d}" for i in range(1, 9)]
+            self.combo_ai_z2.config(values=z2_opts)
+            self.combo_ai_z2.current(0)
+            self.entry_ai_sum_min.delete(0, "end")
+            self.entry_ai_sum_min.insert(0, "85")
+            self.entry_ai_sum_max.delete(0, "end")
+            self.entry_ai_sum_max.insert(0, "155")
+            self.lbl_z1_stats_title.config(text="🔥 第一區 38 顆球號歷史開出頻率與遺漏值排行")
+            self.lbl_z2_stats_title.config(text="🔴 第二區 1~8 號特別號頻率與常態分佈")
+            self.kpi_cards["top_hot_title"].config(text="第一區最熱門球號 Top 1")
+
+        self.load_game_data()
+
     def load_initial_data(self):
-        """啟動時若本地已有 JSON 則立即載入"""
-        if os.path.exists(JSON_FILE):
+        self.load_game_data()
+
+    def load_game_data(self):
+        """依當前選定彩種載入本地 JSON 快取或觸發下載"""
+        json_file, _ = self.get_game_paths()
+        if os.path.exists(json_file):
             try:
-                with open(JSON_FILE, "r", encoding="utf-8") as f:
+                with open(json_file, "r", encoding="utf-8") as f:
                     self.records = json.load(f)
                 if self.records:
                     self.refresh_all_views()
@@ -626,7 +796,7 @@ class TaiwanLottoApp(tk.Tk):
                     self.after(300, self.on_start_solve)
                     return
             except Exception as e:
-                print("載入本地歷史資料失敗:", e)
+                print(f"載入 {self.current_game} 本地歷史資料失敗:", e)
 
         # 若無快取則自動背景下載
         self.on_start_download()
@@ -648,21 +818,37 @@ class TaiwanLottoApp(tk.Tk):
         raw_date = item.get("lotteryDate", "")
         date_str = raw_date.split("T")[0] if "T" in raw_date else raw_date
 
-        self.lbl_selected_period.config(text=f"第 {period} 期")
+        game_title = next((title for code, title in self.game_options if code == self.current_game), self.current_game)
+        self.lbl_selected_period.config(text=f"第 {period} 期 ({game_title})")
         self.lbl_selected_date.config(text=f"開獎日: {date_str}")
-        self.lbl_next_draw.config(text=f"📅 下期預計開獎: {get_next_draw_info()}")
+        self.lbl_next_draw.config(text=f"📅 下期預計開獎: {get_next_draw_info(self.current_game)}")
 
         draw_appear = item.get("drawNumberAppear", [])
+        has_zone2 = (self.current_game in ["super_lotto", "lotto649"])
+        num_main_balls = 3 if self.current_game == "3star" else (4 if self.current_game == "4star" else (5 if self.current_game in ["daily539", "lotto39m"] else 6))
+
         for i in range(6):
-            if i < len(draw_appear):
-                self.ball_widgets[i].update_number(draw_appear[i], is_special=False)
+            if i < num_main_balls and i < len(draw_appear):
+                val_str = str(draw_appear[i])
+                if val_str.isdigit() and self.current_game not in ["3star", "4star"]:
+                    val_str = f"{int(val_str):02d}"
+                self.ball_widgets[i].pack(side="left", padx=3)
+                self.ball_widgets[i].update_number(val_str, is_special=False)
             else:
-                self.ball_widgets[i].update_number("--", is_special=False)
+                self.ball_widgets[i].pack_forget()
 
-        special_num = draw_appear[6] if len(draw_appear) >= 7 else "--"
-        self.special_ball.update_number(special_num, is_special=True)
+        if has_zone2:
+            self.sep_lbl.pack(side="left", padx=5)
+            self.special_ball.pack(side="left", padx=3)
+            special_num = draw_appear[6] if len(draw_appear) >= 7 else "--"
+            if str(special_num).isdigit() and self.current_game not in ["3star", "4star"]:
+                special_num = f"{int(special_num):02d}"
+            self.special_ball.update_number(special_num, is_special=True)
+        else:
+            self.sep_lbl.pack_forget()
+            self.special_ball.pack_forget()
 
-        jackpot = item.get("super638JackpotAssign", {})
+        jackpot = item.get("super638JackpotAssign") or item.get("jackpotAssign") or item.get("daily539JackpotAssign") or {}
         winners = jackpot.get("winnerCount", 0)
         prize = jackpot.get("perPrize", 0)
         sales = item.get("sellAmount", 0)
@@ -674,6 +860,47 @@ class TaiwanLottoApp(tk.Tk):
 
         self.lbl_jackpot_val.config(text=jackpot_txt)
         self.lbl_sales_val.config(text=f"銷售金額: ${sales:,} 元")
+
+    def on_game_selected(self, event=None):
+        idx = self.combo_game.current()
+        if 0 <= idx < len(self.game_options):
+            game_code = self.game_options[idx][0]
+            self.switch_game(game_code)
+
+    def switch_game(self, game_code):
+        self.current_game = game_code
+        game_title = GAME_NAMES.get(game_code, game_code)
+        self.lbl_main_title.config(text=f"🎱 台灣彩券 · {game_title}大數據與 AI 運籌系統")
+        self.update_ai_controls_for_game()
+        self.load_initial_data()
+
+    def update_ai_controls_for_game(self):
+        has_zone2 = (self.current_game in ["super_lotto", "lotto649"])
+        if has_zone2:
+            self.lbl_ai_z2.config(text="🔴 第二區特別號指定:" if self.current_game == "super_lotto" else "🔴 特別號指定:")
+            self.combo_ai_z2.config(state="readonly")
+        else:
+            self.lbl_ai_z2.config(text="🔴 第二區特別號指定: (本彩種無特別號)")
+            self.combo_ai_z2.config(state="disabled")
+
+        if self.current_game == "lotto649":
+            sum_min, sum_max = 115, 185
+        elif self.current_game in ["3star", "4star"]:
+            sum_min, sum_max = (0, 27) if self.current_game == "3star" else (0, 36)
+        elif self.current_game in ["daily539", "lotto39m"]:
+            sum_min, sum_max = 60, 140
+        else:
+            sum_min, sum_max = 85, 155
+
+        self.lbl_ai_sum.config(text=f"和值區間限制 (建議 {sum_min} ~ {sum_max}):")
+        self.entry_ai_sum_min.delete(0, tk.END)
+        self.entry_ai_sum_min.insert(0, str(sum_min))
+        self.entry_ai_sum_max.delete(0, tk.END)
+        self.entry_ai_sum_max.insert(0, str(sum_max))
+
+    def get_game_paths(self):
+        g = self.current_game
+        return f"{g}_history.json", f"{g}_history.csv"
 
     def apply_filter(self):
         keyword = self.search_entry.get().strip().lower()
@@ -688,13 +915,18 @@ class TaiwanLottoApp(tk.Tk):
             date_str = raw_date.split("T")[0] if "T" in raw_date else raw_date
 
             appear_nums = r.get("drawNumberAppear", [])
-            size_nums = r.get("drawNumberSize", [])
+            size_nums = r.get("drawNumberSize", []) or appear_nums
 
-            z1_appear = " ".join(f"{n:02d}" for n in appear_nums[:6])
-            z1_size = " ".join(f"{n:02d}" for n in size_nums[:6])
-            z2 = f"{size_nums[6]:02d}" if len(size_nums) >= 7 else ""
+            if self.current_game in ["3star", "4star"]:
+                z1_appear = " ".join(str(n) for n in appear_nums)
+                z1_size = z1_appear
+                z2 = ""
+            else:
+                z1_appear = " ".join(f"{int(n):02d}" for n in appear_nums[:6]) if len(appear_nums) >= 1 else ""
+                z1_size = " ".join(f"{int(n):02d}" for n in size_nums[:6]) if len(size_nums) >= 1 else ""
+                z2 = f"{int(size_nums[6]):02d}" if len(size_nums) >= 7 and str(size_nums[6]).isdigit() else ""
 
-            jackpot = r.get("super638JackpotAssign", {})
+            jackpot = r.get("super638JackpotAssign") or r.get("jackpotAssign") or r.get("daily539JackpotAssign") or {}
             winners = jackpot.get("winnerCount", 0)
             prize = jackpot.get("perPrize", 0)
             sales = r.get("sellAmount", 0)
@@ -719,7 +951,8 @@ class TaiwanLottoApp(tk.Tk):
             ))
             count += 1
 
-        self.lbl_stats_summary.config(text=f"顯示 {count} / {len(self.records)} 期資料")
+        game_name = next((title for code, title in self.game_options if code == self.current_game), self.current_game)
+        self.lbl_stats_summary.config(text=f"{game_name}：顯示 {count} / {len(self.records)} 期資料")
 
     def on_tree_select(self, event):
         selected_items = self.tree.selection()
@@ -755,7 +988,7 @@ class TaiwanLottoApp(tk.Tk):
             return
 
         try:
-            self.analyzer = LottoAnalyzer(self.records)
+            self.analyzer = LottoAnalyzer(self.records, game_type=self.current_game)
             summary = self.analyzer.get_summary()
         except Exception as ex:
             print("初始化分析器出錯:", ex)
@@ -766,7 +999,7 @@ class TaiwanLottoApp(tk.Tk):
         max_jackpot = 0
 
         for r in self.records:
-            jp = r.get("super638JackpotAssign", {})
+            jp = r.get("super638JackpotAssign") or r.get("jackpotAssign") or r.get("daily539JackpotAssign") or {}
             w = jp.get("winnerCount", 0)
             p = jp.get("perPrize", 0)
             if w > 0:
@@ -774,70 +1007,82 @@ class TaiwanLottoApp(tk.Tk):
                 if p > max_jackpot:
                     max_jackpot = p
 
-        top_hot = summary.get("hot_numbers_zone1", [0])[0]
+        hot_list = summary.get("hot_numbers_zone1") or []
+        top_hot = hot_list[0] if len(hot_list) > 0 else 0
+        top_hot_str = f"{top_hot:02d}" if str(top_hot).isdigit() and self.current_game not in ["3star", "4star"] else str(top_hot)
+        top_hot_cnt = self.analyzer.zone1_freq.get(top_hot, 0)
 
         # 更新 4 大 KPI
         self.kpi_cards["total_draws"].config(text=f"{total_draws:,} 期")
         self.kpi_cards["jackpot_wins"].config(text=f"{jackpot_wins} 注")
         self.kpi_cards["max_jackpot"].config(text=f"${max_jackpot:,} 元")
-        self.kpi_cards["top_hot"].config(text=f"{top_hot:02d} 號 ({self.analyzer.zone1_freq[top_hot]}次)")
+        self.kpi_cards["top_hot"].config(text=f"{top_hot_str} 號 ({top_hot_cnt}次)")
 
-        # 更新左側第一區 38 號頻率樹狀表
+        # 更新左側第 1 區頻率樹狀表
+        max_z1 = self.analyzer.max_ball_z1
+        min_digit = 0 if self.current_game in ["3star", "4star"] else 1
         self.tree_z1_stats.delete(*self.tree_z1_stats.get_children())
-        sorted_z1 = sorted(range(1, 39), key=lambda n: self.analyzer.zone1_freq[n], reverse=True)
+        sorted_z1 = sorted(range(min_digit, max_z1 + 1), key=lambda n: self.analyzer.zone1_freq.get(n, 0), reverse=True)
+
+        hot_th = max(3, int(len(sorted_z1) * 0.2))
+        cold_th = max(5, int(len(sorted_z1) * 0.8))
 
         for rank, num in enumerate(sorted_z1, start=1):
-            cnt = self.analyzer.zone1_freq[num]
-            rate = round((cnt / total_draws) * 100, 1)
+            cnt = self.analyzer.zone1_freq.get(num, 0)
+            rate = round((cnt / total_draws) * 100, 1) if total_draws > 0 else 0
             omiss = self.analyzer.zone1_omission.get(num, 0)
-            if rank <= 8:
+            if rank <= hot_th:
                 status = "🔥 極熱門"
-            elif rank >= 32:
+            elif rank >= cold_th:
                 status = "❄️ 極冷門"
             elif omiss >= 10:
                 status = "⏳ 遺漏待補"
             else:
                 status = "⚖️ 溫號"
 
+            num_str = f"{num:02d}" if self.current_game not in ["3star", "4star"] else str(num)
             self.tree_z1_stats.insert("", "end", values=(
                 f"#{rank}",
-                f"{num:02d}",
+                num_str,
                 f"{cnt} 次",
                 f"{omiss} 期未開",
                 f"{rate} %",
                 status
             ))
 
-        # 更新右側第二區 1~8 號頻率樹狀表
+        # 更新右側第二區 / 特別號頻率樹狀表
+        max_z2 = self.analyzer.max_ball_z2 if self.analyzer.has_zone2 else 0
         self.tree_z2_stats.delete(*self.tree_z2_stats.get_children())
-        sorted_z2 = sorted(range(1, 9), key=lambda n: self.analyzer.zone2_freq[n], reverse=True)
-
-        for num in sorted_z2:
-            cnt = self.analyzer.zone2_freq[num]
-            rate = round((cnt / total_draws) * 100, 1)
-            omiss = self.analyzer.zone2_omission.get(num, 0)
-            self.tree_z2_stats.insert("", "end", values=(
-                f"{num:02d} 號",
-                f"{cnt} 次",
-                f"{rate} %",
-                f"{omiss} 期未開"
-            ))
+        if max_z2 > 0:
+            sorted_z2 = sorted(range(1, max_z2 + 1), key=lambda n: self.analyzer.zone2_freq.get(n, 0), reverse=True)
+            for num in sorted_z2:
+                cnt = self.analyzer.zone2_freq.get(num, 0)
+                rate = round((cnt / total_draws) * 100, 1) if total_draws > 0 else 0
+                omiss = self.analyzer.zone2_omission.get(num, 0)
+                self.tree_z2_stats.insert("", "end", values=(
+                    f"{num:02d} 號",
+                    f"{cnt} 次",
+                    f"{rate} %",
+                    f"{omiss} 期未開"
+                ))
 
         # 常態指標資訊
+        game_desc = "大樂透 (6/49)" if self.current_game == "lotto649" else "威力彩 (6/38+1/8)"
+        def_sum = "115 ~ 185" if self.current_game == "lotto649" else "85 ~ 155"
         norm_txt = (
-            f"【歷史常態特徵大數據】\n"
-            f"• 歷史第一區平均和值: {summary.get('avg_sum', 117.0)} (黃金常態區間: 85 ~ 155)\n"
+            f"【{game_desc} 歷史常態特徵大數據】\n"
+            f"• 歷史平均和值: {summary.get('avg_sum', 150.0 if self.current_game == 'lotto649' else 117.0)} (黃金常態區間: {def_sum})\n"
             f"• 最常見奇偶比: {', '.join(summary.get('common_odd_even', ['3:3', '2:4']))}\n"
             f"• 最常見大小比: {', '.join(summary.get('common_high_low', ['3:3', '4:2']))}\n"
-            f"• 第一區最熱門 Top 5: {', '.join(f'{n:02d}' for n in summary.get('hot_numbers_zone1', [])[:5])}\n"
-            f"• 第二區最熱門特別號: {', '.join(f'{n:02d}' for n in summary.get('hot_numbers_zone2', [])[:3])}"
+            f"• 最熱門 Top 5: {', '.join(f'{n:02d}' for n in summary.get('hot_numbers_zone1', [])[:5])}\n"
+            f"• 最熱門特別號: {', '.join(f'{n:02d}' for n in summary.get('hot_numbers_zone2', [])[:3])}"
         )
         self.lbl_norm_stats.config(text=norm_txt)
 
         # 同步更新 AI 標籤頁的特徵速報
         self.lbl_stats_mini.config(text=(
-            f"• 歷史分析樣本: {total_draws} 期\n"
-            f"• 歷史平均和值: {summary.get('avg_sum', 117.0)}\n"
+            f"• 歷史分析樣本: {total_draws} 期 ({game_desc})\n"
+            f"• 歷史平均和值: {summary.get('avg_sum', 150.0 if self.current_game == 'lotto649' else 117.0)}\n"
             f"• 熱門號 Top 5: {', '.join(f'{n:02d}' for n in summary.get('hot_numbers_zone1', [])[:5])}\n"
             f"• 特別號 Top 3: {', '.join(f'{n:02d}' for n in summary.get('hot_numbers_zone2', [])[:3])}"
         ))
@@ -855,6 +1100,7 @@ class TaiwanLottoApp(tk.Tk):
         # 解析注數
         count_str = self.combo_ai_count.get()
         count = int(count_str.split(" ")[0].replace("注", "")) if count_str else 5
+        max_ball = 49 if self.current_game == "lotto649" else 38
 
         # 膽碼解析
         locked_z1 = []
@@ -863,10 +1109,10 @@ class TaiwanLottoApp(tk.Tk):
             item = item.strip()
             if item.isdigit():
                 val = int(item)
-                if 1 <= val <= 38 and val not in locked_z1:
+                if 1 <= val <= max_ball and val not in locked_z1:
                     locked_z1.append(val)
         if len(locked_z1) > 5:
-            messagebox.showerror("約束錯誤", "第一區必選膽碼最多只能設定 5 個號碼！")
+            messagebox.showerror("約束錯誤", "必選膽碼最多只能設定 5 個號碼！")
             return
 
         # 殺號解析
@@ -876,7 +1122,7 @@ class TaiwanLottoApp(tk.Tk):
             item = item.strip()
             if item.isdigit():
                 val = int(item)
-                if 1 <= val <= 38 and val not in excluded_z1:
+                if 1 <= val <= max_ball and val not in excluded_z1:
                     excluded_z1.append(val)
 
         conflict = set(locked_z1).intersection(set(excluded_z1))
@@ -884,7 +1130,7 @@ class TaiwanLottoApp(tk.Tk):
             messagebox.showerror("約束錯誤", f"號碼 {conflict} 同時出現在膽碼與殺號中，請修正！")
             return
 
-        # 第二區
+        # 第二區 / 特別號
         z2_val = self.combo_ai_z2.get()
         locked_z2 = int(z2_val) if z2_val.isdigit() else None
 
@@ -893,8 +1139,8 @@ class TaiwanLottoApp(tk.Tk):
             sum_min = int(self.entry_ai_sum_min.get().strip())
             sum_max = int(self.entry_ai_sum_max.get().strip())
         except ValueError:
-            sum_min = 85
-            sum_max = 155
+            sum_min = 115 if self.current_game == "lotto649" else 85
+            sum_max = 185 if self.current_game == "lotto649" else 155
 
         constraints = {
             "locked_z1": locked_z1,
@@ -902,7 +1148,8 @@ class TaiwanLottoApp(tk.Tk):
             "locked_z2": locked_z2,
             "sum_min": sum_min,
             "sum_max": sum_max,
-            "diversity": self.var_ai_diversity.get()
+            "diversity": self.var_ai_diversity.get(),
+            "game_type": self.current_game
         }
 
         self.is_solving = True
@@ -911,8 +1158,7 @@ class TaiwanLottoApp(tk.Tk):
 
         def _worker():
             try:
-                if not self.analyzer and self.records and LottoAnalyzer:
-                    self.analyzer = LottoAnalyzer(self.records)
+                self.analyzer = LottoAnalyzer(self.records, game_type=self.current_game)
 
                 if self.analyzer and LottoAIOptimizer:
                     optimizer = LottoAIOptimizer(self.analyzer)
@@ -932,7 +1178,8 @@ class TaiwanLottoApp(tk.Tk):
         self.is_solving = False
         self.btn_ai_solve.config(text="⚡ 啟動 AI 運籌最佳化求解", state="normal")
         self.ai_tickets = results
-        self.lbl_ai_results_status.config(text=f"🎯 成功求解 {len(results)} 組最佳注單 (點擊可個別複製)")
+        game_name = GAME_NAMES.get(self.current_game, self.current_game)
+        self.lbl_ai_results_status.config(text=f"🎯 成功求解 {len(results)} 組最佳 {game_name} 注單 (點擊可個別複製)")
         self.render_ai_tickets(results)
 
     def _on_solve_error(self, err_msg):
@@ -949,6 +1196,8 @@ class TaiwanLottoApp(tk.Tk):
             empty_lbl = tk.Label(self.ai_scrollable_frame, text="無求解結果，可能約束條件過於嚴格，請放寬後重試。", bg=COLOR_BG, fg=COLOR_MUTED, font=("Microsoft JhengHei UI", 11))
             empty_lbl.pack(pady=40)
             return
+
+        has_zone2 = (self.current_game in ["super_lotto", "lotto649"])
 
         for idx, t in enumerate(tickets):
             card = tk.Frame(self.ai_scrollable_frame, bg=COLOR_CARD, padx=12, pady=6, highlightbackground=COLOR_BORDER, highlightthickness=1)
@@ -976,15 +1225,18 @@ class TaiwanLottoApp(tk.Tk):
 
             z1 = t.get("zone1", [])
             for num in z1:
-                ball = LottoBall(balls_row, number=num, is_special=False, size=28, bg=COLOR_CARD)
+                num_str = f"{int(num):02d}" if str(num).isdigit() and self.current_game not in ["3star", "4star"] else str(num)
+                ball = LottoBall(balls_row, number=num_str, is_special=False, size=28, bg=COLOR_CARD)
                 ball.pack(side="left", padx=1)
 
-            sep = tk.Label(balls_row, text="+", font=("Segoe UI", 12, "bold"), bg=COLOR_CARD, fg=COLOR_MUTED)
-            sep.pack(side="left", padx=3)
+            if has_zone2:
+                sep = tk.Label(balls_row, text="+", font=("Segoe UI", 12, "bold"), bg=COLOR_CARD, fg=COLOR_MUTED)
+                sep.pack(side="left", padx=3)
 
-            z2 = t.get("zone2", "--")
-            ball_z2 = LottoBall(balls_row, number=z2, is_special=True, size=28, bg=COLOR_CARD)
-            ball_z2.pack(side="left", padx=1)
+                z2 = t.get("zone2", "--")
+                z2_str = f"{int(z2):02d}" if str(z2).isdigit() else str(z2)
+                ball_z2 = LottoBall(balls_row, number=z2_str, is_special=True, size=28, bg=COLOR_CARD)
+                ball_z2.pack(side="left", padx=1)
 
             # 4. 指標
             metrics_text = f"和值:{t.get('sum', '--')} | 奇偶:{t.get('odd_even', '--')} | 大小:{t.get('high_low', '--')}"
@@ -1010,12 +1262,21 @@ class TaiwanLottoApp(tk.Tk):
         self.ai_canvas.configure(scrollregion=self.ai_canvas.bbox("all"))
         self.ai_canvas.yview_moveto(0)
 
-
-
     def copy_single_ticket(self, t):
-        z1_str = " ".join(f"{n:02d}" for n in t.get("zone1", []))
-        z2_str = f"{t.get('zone2', 0):02d}"
-        text = f"威力彩推薦 第 {t.get('ticket_no', 1)} 注: 第一區 [{z1_str}] + 第二區 [{z2_str}] (和值:{t.get('sum', 0)}, 評分:{t.get('score', 0)}分)"
+        game_name = GAME_NAMES.get(self.current_game, self.current_game)
+        has_zone2 = (self.current_game in ["super_lotto", "lotto649"])
+        special_name = "特別號" if self.current_game == "lotto649" else "第二區"
+
+        z1_nums = t.get("zone1", [])
+        z1_str = " ".join(f"{int(n):02d}" if str(n).isdigit() and self.current_game not in ["3star", "4star"] else str(n) for n in z1_nums)
+
+        if has_zone2:
+            z2_num = t.get("zone2", 0)
+            z2_str = f"{int(z2_num):02d}" if str(z2_num).isdigit() else str(z2_num)
+            text = f"{game_name}推薦 第 {t.get('ticket_no', 1)} 注: [{z1_str}] + {special_name} [{z2_str}] (和值:{t.get('sum', 0)}, 評分:{t.get('score', 0)}分)"
+        else:
+            text = f"{game_name}推薦 第 {t.get('ticket_no', 1)} 注: [{z1_str}] (和值:{t.get('sum', 0)}, 評分:{t.get('score', 0)}分)"
+
         self.clipboard_clear()
         self.clipboard_append(text)
         self.lbl_ai_results_status.config(text=f"✅ 已成功複製 第 {t.get('ticket_no', 1)} 注 到剪貼簿！")
@@ -1025,11 +1286,19 @@ class TaiwanLottoApp(tk.Tk):
             messagebox.showinfo("提示", "目前沒有可複製的注單。")
             return
 
-        lines = ["【台灣彩券 · 威力彩 AI 智慧運籌推薦注單】"]
+        game_name = GAME_NAMES.get(self.current_game, self.current_game)
+        has_zone2 = (self.current_game in ["super_lotto", "lotto649"])
+        special_name = "特別號" if self.current_game == "lotto649" else "第二區"
+        lines = [f"【台灣彩券 · {game_name} AI 智慧運籌推薦注單】"]
         for t in self.ai_tickets:
-            z1_str = " ".join(f"{n:02d}" for n in t.get("zone1", []))
-            z2_str = f"{t.get('zone2', 0):02d}"
-            lines.append(f"第 {t.get('ticket_no', 1):02d} 注: 第一區 [{z1_str}] + 第二區 [{z2_str}]  | 和值:{t.get('sum', 0):3d} | 評分:{t.get('score', 0)}分 | {', '.join(t.get('reasons', []))}")
+            z1_nums = t.get("zone1", [])
+            z1_str = " ".join(f"{int(n):02d}" if str(n).isdigit() and self.current_game not in ["3star", "4star"] else str(n) for n in z1_nums)
+            if has_zone2:
+                z2_num = t.get("zone2", 0)
+                z2_str = f"{int(z2_num):02d}" if str(z2_num).isdigit() else str(z2_num)
+                lines.append(f"第 {t.get('ticket_no', 1):02d} 注: [{z1_str}] + {special_name} [{z2_str}]  | 和值:{t.get('sum', 0):3d} | 評分:{t.get('score', 0)}分 | {', '.join(t.get('reasons', []))}")
+            else:
+                lines.append(f"第 {t.get('ticket_no', 1):02d} 注: [{z1_str}]  | 和值:{t.get('sum', 0):3d} | 評分:{t.get('score', 0)}分 | {', '.join(t.get('reasons', []))}")
 
         full_text = "\n".join(lines)
         self.clipboard_clear()
@@ -1049,20 +1318,24 @@ class TaiwanLottoApp(tk.Tk):
         self.btn_fetch.config(state="disabled")
         self.progress_frame.pack(side="top", fill="x", padx=4, pady=4)
         self.progress_bar.start(10)
-        self.lbl_status.config(text="正在連線台灣彩券官方下載獎號...")
+        game_name = next((title for code, title in self.game_options if code == self.current_game), self.current_game)
+        self.lbl_status.config(text=f"正在連線台灣彩券官方下載 {game_name} 獎號...")
 
         def _worker():
             cur_y = datetime.now().year
+            json_file, csv_file = self.get_game_paths()
+            from taiwan_lottery import download_game_range, fetch_game_by_year, save_to_csv, save_to_json
             if "全期別" in year_val:
-                download_super_lotto_range(2024, cur_y, CSV_FILE)
+                download_game_range(self.current_game, 2024, cur_y, csv_file)
             else:
                 y = int(year_val)
-                recs = fetch_super_lotto_by_year(y)
-                save_to_csv(recs, CSV_FILE)
-                save_to_json(recs, JSON_FILE)
+                recs = fetch_game_by_year(self.current_game, y)
+                if recs:
+                    save_to_csv(recs, csv_file, game_type=self.current_game)
+                    save_to_json(recs, json_file)
 
-            if os.path.exists(JSON_FILE):
-                with open(JSON_FILE, "r", encoding="utf-8") as f:
+            if os.path.exists(json_file):
+                with open(json_file, "r", encoding="utf-8") as f:
                     self.records = json.load(f)
 
             self.after(0, self._on_download_complete)
@@ -1075,29 +1348,39 @@ class TaiwanLottoApp(tk.Tk):
         self.progress_bar.stop()
         self.progress_frame.pack_forget()
         self.refresh_all_views()
-        messagebox.showinfo("同步完成", f"已成功更新！目前資料庫共有 {len(self.records)} 期威力彩開獎紀錄。")
+        game_name = "大樂透" if self.current_game == "lotto649" else "威力彩"
+        messagebox.showinfo("同步完成", f"已成功更新！目前資料庫共有 {len(self.records)} 期 {game_name} 開獎紀錄。")
 
     def export_csv(self):
         if not self.records:
             messagebox.showwarning("提示", "目前尚無資料可匯出！")
             return
+        prefix = "lotto649" if self.current_game == "lotto649" else "super_lotto"
         filepath = filedialog.asksaveasfilename(
             defaultextension=".csv",
             filetypes=[("CSV 試算表", "*.csv"), ("所有檔案", "*.*")],
-            initialfile=f"super_lotto_{datetime.now().strftime('%Y%m%d')}.csv"
+            initialfile=f"{prefix}_{datetime.now().strftime('%Y%m%d')}.csv"
         )
         if filepath:
-            save_to_csv(self.records, filepath)
+            if self.current_game == "lotto649":
+                formatted = [parse_lotto649_record(r) for r in self.records]
+                with open(filepath, "w", newline="", encoding="utf-8-sig") as cf:
+                    writer = csv.DictWriter(cf, fieldnames=list(formatted[0].keys()))
+                    writer.writeheader()
+                    writer.writerows(formatted)
+            else:
+                save_to_csv(self.records, filepath)
             messagebox.showinfo("匯出成功", f"資料已成功匯出至：\n{filepath}")
 
     def export_json(self):
         if not self.records:
             messagebox.showwarning("提示", "目前尚無資料可匯出！")
             return
+        prefix = "lotto649" if self.current_game == "lotto649" else "super_lotto"
         filepath = filedialog.asksaveasfilename(
             defaultextension=".json",
             filetypes=[("JSON 資料檔", "*.json"), ("所有檔案", "*.*")],
-            initialfile=f"super_lotto_{datetime.now().strftime('%Y%m%d')}.json"
+            initialfile=f"{prefix}_{datetime.now().strftime('%Y%m%d')}.json"
         )
         if filepath:
             save_to_json(self.records, filepath)
@@ -1184,7 +1467,7 @@ class TaiwanLottoApp(tk.Tk):
                 pass
 
         real_ip = get_real_local_ip()
-        web_url = f"http://{real_ip}:5000"
+        web_url = f"http://127.0.0.1:5000"
 
         # 1. 強制關閉背景運行的舊版 5000 埠口伺服器
         kill_old_server_process()
@@ -1195,11 +1478,20 @@ class TaiwanLottoApp(tk.Tk):
             script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.py")
             creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
             subprocess.Popen([sys.executable, script_path], creationflags=creation_flags)
-            time.sleep(1.8)
         except Exception as ex:
             print("自動啟動 Web 伺服器失敗:", ex)
 
-        # 3. 在預設瀏覽器開啟最新的真實 IP Web 網址
+        # 輪詢等待 Web 伺服器埠口 5000 Ready (最多等待 6 秒)
+        server_ready = False
+        for _ in range(30):
+            try:
+                with socket.create_connection(("127.0.0.1", 5000), timeout=0.2):
+                    server_ready = True
+                    break
+            except Exception:
+                time.sleep(0.2)
+
+        # 3. 在預設瀏覽器開啟 Web 網址
         webbrowser.open(web_url)
 
 

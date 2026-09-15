@@ -156,6 +156,50 @@
       transform: translateY(-2px);
     }
 
+    /* 雙彩種切換器 (Game Switcher Segmented Control) */
+    .game-switch-tabs {
+      display: inline-flex;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      gap: 6px;
+      backdrop-filter: blur(10px);
+    }
+
+    .game-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 16px;
+      border-radius: 9px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid transparent;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+
+    .game-tab:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .game-tab.active {
+      background: var(--gold-gradient);
+      color: #000000;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+      border-color: rgba(245, 158, 11, 0.6);
+    }
+
+    .game-tab.active .tab-icon {
+      filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+    }
+
     /* 主要容器 */
     main {
       max-width: 1320px;
@@ -680,6 +724,144 @@
       box-shadow: 0 6px 20px rgba(236, 72, 153, 0.5);
     }
 
+    .btn-verify-nav {
+      background: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+      font-weight: 700;
+    }
+    .btn-verify-nav:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
+    }
+
+    /* 🛡️ 權威驗證與回測專屬樣式 */
+    .verification-card {
+      border: 1px solid rgba(16, 185, 129, 0.35) !important;
+      box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.7), 0 0 35px rgba(16, 185, 129, 0.08) !important;
+    }
+    .verification-card::before {
+      background: linear-gradient(90deg, #10b981, #06b6d4, #8b5cf6, #f59e0b) !important;
+    }
+    .verify-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 992px) {
+      .verify-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .verify-subcard {
+      background: rgba(15, 20, 30, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 16px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+    }
+    .verify-subcard-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .verify-subcard-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #f3f4f6;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .verify-badge {
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-weight: 600;
+    }
+    .verify-hash-box {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px dashed rgba(16, 185, 129, 0.4);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 0.82rem;
+      color: #34d399;
+      word-break: break-all;
+      user-select: all;
+    }
+    .verify-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .verify-metric-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+    .verify-metric-val {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #10b981;
+      font-family: 'Outfit', sans-serif;
+    }
+    .verify-metric-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .backtest-table-container {
+      max-height: 240px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+    .backtest-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .backtest-table th {
+      background: rgba(20, 26, 40, 0.95);
+      position: sticky;
+      top: 0;
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .backtest-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .prize-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 0.73rem;
+      font-weight: 600;
+    }
+    .prize-win {
+      background: rgba(245, 158, 11, 0.25);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+    .prize-none {
+      color: #6b7280;
+    }
+
     .ai-card {
       margin: 28px 0;
       background: linear-gradient(145deg, rgba(20, 25, 38, 0.85) 0%, rgba(13, 16, 25, 0.95) 100%);
@@ -792,6 +974,12 @@
       grid-template-columns: 340px 1fr;
       gap: 24px;
       align-items: start;
+    }
+
+    @media (max-width: 992px) {
+      .ai-body-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
 
@@ -1230,6 +1418,17 @@
       .brand-title {
         font-size: 1.15rem;
       }
+      .game-switch-tabs {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        box-sizing: border-box;
+      }
+      .game-tab {
+        justify-content: center;
+        padding: 8px 10px;
+        font-size: 0.84rem;
+      }
       .header-actions {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -1555,15 +1754,55 @@
   <!-- 頂部導航 -->
   <header>
     <div class="brand-group">
-      <div class="brand-logo">🎱</div>
+      <div class="brand-logo" id="brandLogoIcon">🎱</div>
       <div>
-        <div class="brand-title">台灣彩券 · 威力彩歷史儀表板</div>
+        <div class="brand-title" id="brandMainTitle">台灣彩券 · 威力彩歷史儀表板</div>
       </div>
-      <span class="brand-badge">第 5 屆官方連線</span>
+      <span class="brand-badge" id="brandBadgeOfficial">第 5 屆官方連線</span>
     </div>
+
+    <!-- 8 大彩種切換器 -->
+    <div class="game-switch-tabs" id="gameSwitchTabs">
+      <button class="game-tab active" id="btnTab_super_lotto" onclick="switchGame('super_lotto')">
+        <span class="tab-icon">🎱</span>
+        <span class="tab-title">威力彩 (6/38)</span>
+      </button>
+      <button class="game-tab" id="btnTab_lotto649" onclick="switchGame('lotto649')">
+        <span class="tab-icon">💎</span>
+        <span class="tab-title">大樂透 (6/49)</span>
+      </button>
+      <button class="game-tab" id="btnTab_daily539" onclick="switchGame('daily539')">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-title">今彩539 (5/39)</span>
+      </button>
+      <button class="game-tab" id="btnTab_lotto39m" onclick="switchGame('lotto39m')">
+        <span class="tab-icon">🔢</span>
+        <span class="tab-title">39樂合彩</span>
+      </button>
+      <button class="game-tab" id="btnTab_lotto49m" onclick="switchGame('lotto49m')">
+        <span class="tab-icon">🔢</span>
+        <span class="tab-title">49樂合彩</span>
+      </button>
+      <button class="game-tab" id="btnTab_3star" onclick="switchGame('3star')">
+        <span class="tab-icon">⭐</span>
+        <span class="tab-title">3星彩</span>
+      </button>
+      <button class="game-tab" id="btnTab_4star" onclick="switchGame('4star')">
+        <span class="tab-icon">🌟</span>
+        <span class="tab-title">4星彩</span>
+      </button>
+      <button class="game-tab" id="btnTab_bingo" onclick="switchGame('bingo')">
+        <span class="tab-icon">🎰</span>
+        <span class="tab-title">BINGO BINGO</span>
+      </button>
+    </div>
+
     <div class="header-actions">
       <button class="btn btn-ai-nav" onclick="scrollToAiSection()">
         <span>🤖</span> AI 運籌預測
+      </button>
+      <button class="btn btn-verify-nav" onclick="scrollToVerificationSection()">
+        <span>🛡️</span> 權威神準驗證
       </button>
       <button class="btn btn-secondary" id="btnSync" onclick="triggerSync()">
         <span>🔄</span> 同步最新獎號
@@ -1582,7 +1821,7 @@
     <section class="hero-card" id="heroCard">
       <div class="hero-header">
         <div>
-          <div class="hero-meta-title">SELECTED DRAW RESULT</div>
+          <div class="hero-meta-title" id="heroMetaTitle">SELECTED DRAW RESULT · 威力彩</div>
           <div class="hero-period" id="heroPeriod">
             第 <span id="valPeriod">--</span> 期
             <span class="hero-date" id="valDate">開獎日期: ----/--/--</span>
@@ -1599,7 +1838,7 @@
       <div class="balls-section">
         <div class="balls-group">
           <div class="group-label">
-            <span>🟡 第一區獎號 (開出順序)</span>
+            <span id="lblHeroZone1">🟡 第一區獎號 (開出順序)</span>
           </div>
           <div class="balls-row" id="zone1Row">
             <div class="lotto-ball ball-gold">--</div>
@@ -1615,7 +1854,7 @@
 
         <div class="balls-group">
           <div class="group-label">
-            <span>🔴 第二區特別號</span>
+            <span id="lblHeroZone2">🔴 第二區特別號</span>
           </div>
           <div class="balls-row">
             <div class="lotto-ball ball-red" id="zone2Ball">--</div>
@@ -1642,7 +1881,7 @@
         <div class="kpi-sub" id="kpiMaxPeriod">--</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-title">第一區最熱門球號 Top 1</div>
+        <div class="kpi-title" id="kpiTopTitle">第一區最熱門球號 Top 1</div>
         <div class="kpi-value" id="kpiTopNumber" style="color: var(--gold-primary);">--</div>
         <div class="kpi-sub" id="kpiTopCount">開出 0 次</div>
       </div>
@@ -1654,7 +1893,7 @@
         <div class="ai-title-wrap">
           <div class="ai-robot-badge">🤖</div>
           <div>
-            <div class="ai-title">AI 運籌最佳化 · 智慧預測推薦</div>
+            <div class="ai-title" id="lblAiSectionTitle">AI 運籌最佳化 · 智慧預測推薦 (威力彩)</div>
             <div class="ai-subtitle">利用 0-1 混合整數規劃 (CP-SAT)、歷史遺漏回補、共現親和矩陣與包牌覆蓋率最佳化</div>
           </div>
         </div>
@@ -1685,24 +1924,24 @@
 
           <!-- 必選膽碼 -->
           <div class="control-group">
-            <label class="control-label" for="inputLocked">
-              📌 必選膽碼 (第一區，以逗號分隔，最多 5 個)
+            <label class="control-label" for="inputLocked" id="lblAiLocked">
+              📌 必選膽碼 (第一區 1~38，以逗號分隔，最多 5 個)
             </label>
             <input type="text" id="inputLocked" class="control-input" placeholder="例如: 3, 18, 25 (選填)">
           </div>
 
           <!-- 排除殺號 -->
           <div class="control-group">
-            <label class="control-label" for="inputExcluded">
-              ❌ 排除殺號 (第一區，以逗號分隔)
+            <label class="control-label" for="inputExcluded" id="lblAiExcluded">
+              ❌ 排除殺號 (第一區 1~38，以逗號分隔)
             </label>
             <input type="text" id="inputExcluded" class="control-input" placeholder="例如: 4, 14 (選填)">
           </div>
 
           <!-- 第二區特別號 -->
           <div class="control-group">
-            <label class="control-label" for="selectZ2">
-              🔴 第二區特別號指定
+            <label class="control-label" for="selectZ2" id="lblAiZ2">
+              🔴 第二區特別號指定 (1~8)
             </label>
             <select id="selectZ2" class="control-select">
               <option value="">由 AI 潛力權重推薦 (輪轉平衡)</option>
@@ -1721,10 +1960,10 @@
           <div class="control-group">
             <label class="control-label">和值黃金分佈區間 (Sum Range)</label>
             <div class="range-inputs">
-              <input type="number" id="inputSumMin" class="control-input mini" value="85" min="21" max="222">
+              <input type="number" id="inputSumMin" class="control-input mini" value="85" min="21" max="290">
               <span style="color: var(--text-muted); line-height: 38px;">~</span>
-              <input type="number" id="inputSumMax" class="control-input mini" value="155" min="21" max="222">
-              <span class="range-hint">常態 85~155</span>
+              <input type="number" id="inputSumMax" class="control-input mini" value="155" min="21" max="290">
+              <span class="range-hint" id="lblSumRangeHint">常態 85~155</span>
             </div>
           </div>
 
@@ -1748,8 +1987,8 @@
             <div class="summary-title">📊 歷史特徵工程速報</div>
             <div class="summary-row"><span>歷史分析樣本:</span><span id="aiStatDraws">載入中...</span></div>
             <div class="summary-row"><span>常態平均和值:</span><span id="aiStatAvgSum">--</span></div>
-            <div class="summary-row"><span>第一區熱門號:</span><span id="aiStatHot" class="highlight-gold">--</span></div>
-            <div class="summary-row"><span>第二區熱門號:</span><span id="aiStatHotZ2" class="highlight-red">--</span></div>
+            <div class="summary-row"><span id="lblStatHotZ1">第一區熱門號:</span><span id="aiStatHot" class="highlight-gold">--</span></div>
+            <div class="summary-row"><span id="lblStatHotZ2">第二區熱門號:</span><span id="aiStatHotZ2" class="highlight-red">--</span></div>
           </div>
         </div>
 
@@ -1773,6 +2012,136 @@
           <!-- 推薦注單列表容器 -->
           <div class="tickets-container" id="ticketsContainer">
             <!-- JS 動態渲染注單卡片 -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 🛡️ 權威科學驗證與回測實驗室 (AI Backtest & Cryptographic Verification Lab) -->
+    <section class="ai-card verification-card" id="verificationSection">
+      <div class="ai-card-header">
+        <div class="ai-title-wrap">
+          <div class="ai-robot-badge" style="background: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);">🛡️</div>
+          <div>
+            <div class="ai-title">權威神準驗證實驗室 · 杜絕倖存者偏差</div>
+            <div class="ai-subtitle">結合【無未來數據滾動盲測 (Walk-Forward Backtest)】與【開獎前 SHA-256 密碼學存證】，以客觀數據與數學證明服人</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <span class="verify-badge">🔒 SHA-256 防竄改</span>
+          <span class="verify-badge">📊 步進時序盲測</span>
+        </div>
+      </div>
+
+      <div class="verify-grid">
+        <!-- 左卡片：開獎前 SHA-256 密碼學存證 -->
+        <div class="verify-subcard">
+          <div class="verify-subcard-header">
+            <div class="verify-subcard-title">
+              <span>🔐 開獎前 SHA-256 盲測存證 (Proof of Commitment)</span>
+            </div>
+            <span class="verify-badge" id="commitPeriodTag">第 -- 期鎖定</span>
+          </div>
+
+          <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;" id="lblCommitDesc">
+            在每週一/週四開獎前（18:00 前），系統將預測注單、隨機鹽值與時間戳計算為不可逆的 SHA-256 數位指紋。開獎前公開 Hash 碼，任何人皆無法事後換號；開獎後公佈明文，即可全網公開驗證。
+          </div>
+
+          <div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600;">
+              🔑 當期開獎前防作弊 SHA-256 指紋 (Public Hash Token):
+            </div>
+            <div class="verify-hash-box" id="dispCommitHash">
+              載入預測數據中...
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-secondary" style="font-size: 0.82rem; padding: 7px 14px;" onclick="copyCommitmentHash()">
+              <span>📋</span> 複製公證 Hash
+            </button>
+            <button class="btn btn-primary" style="font-size: 0.82rem; padding: 7px 14px;" onclick="copyFullProofPackage()">
+              <span>📤</span> 複製完整公證封包 (發送社群存證)
+            </button>
+            <button class="btn btn-secondary" style="font-size: 0.82rem; padding: 7px 14px;" onclick="toggleVerifyModal()">
+              <span>🔍</span> 開獎後一鍵驗證
+            </button>
+          </div>
+
+          <!-- 展開驗證工具 -->
+          <div id="verifyToolCollapse" style="display: none; background: rgba(0,0,0,0.35); border-radius: 10px; padding: 12px; border: 1px solid rgba(255,255,255,0.08);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #34d399; margin-bottom: 6px;">
+              ⚡ 線上密碼學快速反向驗證
+            </div>
+            <input type="text" id="inputVerifyPayload" class="control-input" placeholder="貼上明文字串 (Canonical Payload)" style="font-size: 0.78rem; margin-bottom: 8px;">
+            <input type="text" id="inputVerifyHash" class="control-input" placeholder="貼上開獎前公佈的 SHA-256 雜湊碼" style="font-size: 0.78rem; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <button class="btn btn-success" style="font-size: 0.8rem; padding: 6px 12px;" onclick="runLiveHashVerification()">
+                立即執行密碼學比對
+              </button>
+              <div id="liveVerifyResult" style="font-size: 0.8rem; font-weight: 600;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右卡片：無未來數據滾動步進回測 -->
+        <div class="verify-subcard">
+          <div class="verify-subcard-header">
+            <div class="verify-subcard-title">
+              <span>📈 嚴格滾動盲測 vs 隨機快選 (Walk-Forward Test)</span>
+            </div>
+            <div class="ticket-pills" style="margin: 0;">
+              <button type="button" class="t-pill" data-draws="15" onclick="selectBacktestDraws(15)">15期</button>
+              <button type="button" class="t-pill active" data-draws="25" onclick="selectBacktestDraws(25)">25期</button>
+              <button type="button" class="t-pill" data-draws="40" onclick="selectBacktestDraws(40)">40期</button>
+            </div>
+          </div>
+
+          <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+            模擬歷史真實環境（回測第 K 期時嚴格只使用第 1 ~ K-1 期數據），與電腦隨機快選 (Random Baseline) 進行 A/B 對照檢驗。
+          </div>
+
+          <!-- 關鍵對比指標 -->
+          <div class="verify-metrics-grid">
+            <div class="verify-metric-box">
+              <div class="verify-metric-val" id="valAlphaMultiplier">--x</div>
+              <div class="verify-metric-label">勝率提升倍率 (Alpha)</div>
+            </div>
+            <div class="verify-metric-box">
+              <div class="verify-metric-val" id="valAiHitRate" style="color: #fbbf24;">--%</div>
+              <div class="verify-metric-label">AI 普獎+ 中獎率</div>
+            </div>
+            <div class="verify-metric-box">
+              <div class="verify-metric-val" id="valRandHitRate" style="color: var(--text-muted);">--%</div>
+              <div class="verify-metric-label">隨機快選中獎率</div>
+            </div>
+          </div>
+
+          <!-- 啟動回測按鈕 -->
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button class="btn btn-ai-solve" id="btnRunBacktest" style="flex: 1; padding: 10px;" onclick="triggerWalkForwardBacktest()">
+              <span id="btnBacktestText">🚀 啟動無未來數據步進回測</span>
+            </button>
+            <button class="btn btn-secondary" style="font-size: 0.82rem; padding: 10px 14px;" onclick="toggleBacktestLogs()">
+              <span>📋</span> 查看每期對照表
+            </button>
+          </div>
+
+          <!-- 回測對照表容器 -->
+          <div class="backtest-table-container" id="backtestTableWrap" style="display: none;">
+            <table class="backtest-table">
+              <thead>
+                <tr>
+                  <th>期別 / 日期</th>
+                  <th>實際開獎 (6+1)</th>
+                  <th>AI 最佳戰績</th>
+                  <th>隨機快選戰績</th>
+                </tr>
+              </thead>
+              <tbody id="backtestTableBody">
+                <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">尚未執行回測，請點擊上方按鈕啟動。</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -1849,12 +2218,22 @@
   </div>
 
   <script>
+    let currentGame = 'super_lotto'; // 'super_lotto' | 'lotto649'
     let allRecords = [];
     let displayedRecords = [];
     let activeYear = 'all';
     let selectedBallFilter = null;
+    let currentTicketCount = 5;
+    let aiStatusData = null;
+    let latestAiTickets = [];
+    let latestCommitment = null;
+    let selectedBacktestDraws = 25;
 
-    function getNextDrawDateInfo() {
+    function getJackpotAssign(r) {
+      return r.super638JackpotAssign || r.lotto649JackpotAssign || r.jackpotAssign || {};
+    }
+
+    function getNextDrawDateInfo(game = currentGame) {
       const now = new Date();
       const weekdayNames = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
       const day = now.getDay();
@@ -1862,21 +2241,55 @@
       const minutes = now.getMinutes();
       const drawTimePassed = (hours > 20) || (hours === 20 && minutes >= 30);
 
+      const g = (game || 'super_lotto').toLowerCase();
       let daysAhead = 0;
-      if (day === 1) {        // Mon
-        daysAhead = drawTimePassed ? 3 : 0;
-      } else if (day === 2) { // Tue
-        daysAhead = 2;
-      } else if (day === 3) { // Wed
-        daysAhead = 1;
-      } else if (day === 4) { // Thu
-        daysAhead = drawTimePassed ? 4 : 0;
-      } else if (day === 5) { // Fri
-        daysAhead = 3;
-      } else if (day === 6) { // Sat
-        daysAhead = 2;
-      } else if (day === 0) { // Sun
-        daysAhead = 1;
+      let drawTimeStr = '20:30';
+
+      if (g === 'lotto649' || g === 'lotto49m') {
+        // 大樂透 / 49樂合彩：每週二(2)、週五(5) 20:30
+        if (day === 2) daysAhead = drawTimePassed ? 3 : 0;
+        else if (day === 3) daysAhead = 2;
+        else if (day === 4) daysAhead = 1;
+        else if (day === 5) daysAhead = drawTimePassed ? 4 : 0;
+        else if (day === 6) daysAhead = 3;
+        else if (day === 0) daysAhead = 2;
+        else if (day === 1) daysAhead = 1;
+      } else if (g === 'daily539' || g === 'lotto39m' || g === '3star' || g === '4star') {
+        // 今彩539 / 39樂合彩 / 3星彩 / 4星彩：每週一~六 (1~6) 20:30 (週日公休)
+        if (day === 0) daysAhead = 1;
+        else if (drawTimePassed) daysAhead = (day === 6) ? 2 : 1;
+        else daysAhead = 0;
+      } else if (g === 'bingo') {
+        // BINGO BINGO 天天 07:05 ~ 23:55 每 5 分鐘開獎一次
+        const nextMin = Math.floor(minutes / 5 + 1) * 5;
+        const target = new Date(now);
+        if (nextMin >= 60) {
+          target.setHours(target.getHours() + 1, 0, 0, 0);
+        } else {
+          target.setMinutes(nextMin, 0, 0);
+        }
+        if (target.getHours() < 7 || (target.getHours() === 7 && target.getMinutes() < 5)) {
+          target.setHours(7, 5, 0, 0);
+        } else if (target.getHours() > 23 || (target.getHours() === 23 && target.getMinutes() > 55)) {
+          target.setDate(target.getDate() + 1);
+          target.setHours(7, 5, 0, 0);
+        }
+        const y = target.getFullYear();
+        const m = String(target.getMonth() + 1).padStart(2, '0');
+        const d = String(target.getDate()).padStart(2, '0');
+        const hh = String(target.getHours()).padStart(2, '0');
+        const mm = String(target.getMinutes()).padStart(2, '0');
+        const w = weekdayNames[target.getDay()];
+        return `${y}-${m}-${d} ${hh}:${mm} (${w}) [每5分鐘開獎]`;
+      } else {
+        // 威力彩：每週一(1)、週四(4) 20:30
+        if (day === 1) daysAhead = drawTimePassed ? 3 : 0;
+        else if (day === 2) daysAhead = 2;
+        else if (day === 3) daysAhead = 1;
+        else if (day === 4) daysAhead = drawTimePassed ? 4 : 0;
+        else if (day === 5) daysAhead = 3;
+        else if (day === 6) daysAhead = 2;
+        else if (day === 0) daysAhead = 1;
       }
 
       const target = new Date(now);
@@ -1886,12 +2299,105 @@
       const date = String(target.getDate()).padStart(2, '0');
       const wStr = weekdayNames[target.getDay()];
 
-      return `${year}-${month}-${date} (${wStr}) 20:30`;
+      return `${year}-${month}-${date} (${wStr}) ${drawTimeStr}`;
+    }
+
+    const GAME_META = {
+      "super_lotto": { name: "威力彩", icon: "🎱", title: "台灣彩券 · 威力彩 6/38 歷史儀表板", z1_label: "🟡 第一區獎號 (1~38)", z2_label: "🔴 第二區特別號 (1~8)", max_z1: 38, max_z2: 8, sum_min: 85, sum_max: 155 },
+      "lotto649":    { name: "大樂透", icon: "💎", title: "台灣彩券 · 大樂透 6/49 歷史儀表板", z1_label: "🟡 開出號碼 (1~49)", z2_label: "🔴 特別號 (1~49)", max_z1: 49, max_z2: 49, sum_min: 115, sum_max: 185 },
+      "daily539":    { name: "今彩539", icon: "🎯", title: "台灣彩券 · 今彩539 歷史儀表板", z1_label: "🟡 開出號碼 (1~39)", z2_label: "無特別號", max_z1: 39, max_z2: 0, sum_min: 60, sum_max: 140 },
+      "lotto39m":    { name: "39樂合彩", icon: "🔢", title: "台灣彩券 · 39樂合彩 歷史儀表板", z1_label: "🟡 開出號碼 (1~39)", z2_label: "無特別號", max_z1: 39, max_z2: 0, sum_min: 60, sum_max: 140 },
+      "lotto49m":    { name: "49樂合彩", icon: "🔢", title: "台灣彩券 · 49樂合彩 歷史儀表板", z1_label: "🟡 開出號碼 (1~49)", z2_label: "無特別號", max_z1: 49, max_z2: 0, sum_min: 115, sum_max: 185 },
+      "3star":       { name: "3星彩", icon: "⭐", title: "台灣彩券 · 3星彩 歷史儀表板", z1_label: "🟡 開出數位 (0~9)", z2_label: "無特別號", max_z1: 9, max_z2: 0, sum_min: 0, sum_max: 27 },
+      "4star":       { name: "4星彩", icon: "🌟", title: "台灣彩券 · 4星彩 歷史儀表板", z1_label: "🟡 開出數位 (0~9)", z2_label: "無特別號", max_z1: 9, max_z2: 0, sum_min: 0, sum_max: 36 },
+      "bingo":       { name: "BINGO BINGO", icon: "🎰", title: "台灣彩券 · 賓果賓果 歷史儀表板", z1_label: "🟡 開出 20 號 (1~80)", z2_label: "🔴 超級獎號 (1~80)", max_z1: 80, max_z2: 80, sum_min: 600, sum_max: 1000 }
+    };
+
+    async function switchGame(gameType) {
+      if (!GAME_META[gameType]) gameType = 'super_lotto';
+      currentGame = gameType;
+      const meta = GAME_META[currentGame];
+
+      // 切換按鈕 active 狀態
+      Object.keys(GAME_META).forEach(k => {
+        const tab = document.getElementById(`btnTab_${k}`);
+        if (tab) tab.classList.toggle('active', k === currentGame);
+      });
+
+      // 品牌與主要看板文字
+      const brandTitle = document.getElementById('brandMainTitle');
+      if (brandTitle) brandTitle.innerText = meta.title;
+      const brandLogo = document.getElementById('brandLogoIcon');
+      if (brandLogo) brandLogo.innerText = meta.icon;
+
+      const heroMeta = document.getElementById('heroMetaTitle');
+      if (heroMeta) heroMeta.innerText = `SELECTED DRAW RESULT · ${meta.name}`;
+
+      const lblHeroZ1 = document.getElementById('lblHeroZone1');
+      if (lblHeroZ1) lblHeroZ1.innerText = meta.z1_label;
+
+      const lblHeroZ2 = document.getElementById('lblHeroZone2');
+      if (lblHeroZ2) lblHeroZ2.innerText = meta.z2_label;
+
+      // AI 條件與輸入限制
+      const lblAiTitle = document.getElementById('lblAiSectionTitle');
+      if (lblAiTitle) lblAiTitle.innerText = `${meta.name} 專屬條件與包牌策略`;
+
+      const minBall = (currentGame === '3star' || currentGame === '4star') ? 0 : 1;
+      const lblLocked = document.getElementById('lblAiLocked');
+      if (lblLocked) lblLocked.innerText = `📌 必選膽碼 (第一區 ${minBall}~${meta.max_z1}，以逗號分隔，最多 5 個)`;
+      const lblExcluded = document.getElementById('lblAiExcluded');
+      if (lblExcluded) lblExcluded.innerText = `❌ 排除殺號 (第一區 ${minBall}~${meta.max_z1}，以逗號分隔)`;
+
+      const sumMinInput = document.getElementById('inputSumMin');
+      const sumMaxInput = document.getElementById('inputSumMax');
+      const sumHint = document.getElementById('lblSumRangeHint');
+      if (sumMinInput) sumMinInput.value = meta.sum_min;
+      if (sumMaxInput) sumMaxInput.value = meta.sum_max;
+      if (sumHint) sumHint.innerText = `常態 ${meta.sum_min}~${meta.sum_max}`;
+
+      // 重建 selectZ2 下拉清單
+      const selectZ2 = document.getElementById('selectZ2');
+      if (selectZ2) {
+        selectZ2.innerHTML = '';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.innerText = meta.max_z2 > 0 ? `由 AI 潛力權重推薦 (1~${meta.max_z2})` : '不適用 (該彩種無第二區/特別號)';
+        selectZ2.appendChild(defaultOpt);
+        if (meta.max_z2 > 0) {
+          selectZ2.disabled = false;
+          for (let i = 1; i <= meta.max_z2; i++) {
+            const opt = document.createElement('option');
+            opt.value = String(i);
+            opt.innerText = `指定 ${i < 10 ? '0' + i : i} 號`;
+            selectZ2.appendChild(opt);
+          }
+        } else {
+          selectZ2.disabled = true;
+        }
+      }
+
+      // 清空手動條件
+      const inpLocked = document.getElementById('inputLocked');
+      if (inpLocked) inpLocked.value = '';
+      const inpExcluded = document.getElementById('inputExcluded');
+      if (inpExcluded) inpExcluded.value = '';
+
+      selectedBallFilter = null;
+      document.getElementById('searchInput').value = '';
+      activeYear = 'all';
+
+      // 下期時間更新
+      document.getElementById('valNextDraw').innerText = `📅 下期預計開獎: ${getNextDrawDateInfo(currentGame)}`;
+
+      // 重新載入數據與 AI 運籌求解
+      await loadData();
+      await triggerAiPredict();
     }
 
     // 頁面加載後抓取資料
     window.addEventListener('DOMContentLoaded', async () => {
-      document.getElementById('valNextDraw').innerText = `📅 下期預計開獎: ${getNextDrawDateInfo()}`;
+      document.getElementById('valNextDraw').innerText = `📅 下期預計開獎: ${getNextDrawDateInfo(currentGame)}`;
       initZipModalYears();
       await loadData();
       await checkAiStatus();
@@ -1900,7 +2406,7 @@
 
     async function loadData() {
       try {
-        const res = await fetch('/api/lottery');
+        const res = await fetch(`/api/lottery?game=${currentGame}`);
         if (!res.ok) throw new Error('API fetch failed');
         allRecords = await res.json();
         // 依照期別倒序
@@ -1926,7 +2432,7 @@
       const zone1Counts = {};
 
       allRecords.forEach(r => {
-        const jp = r.super638JackpotAssign || {};
+        const jp = getJackpotAssign(r);
         const win = jp.winnerCount || 0;
         const prize = jp.perPrize || 0;
         if (win > 0) {
@@ -1948,7 +2454,7 @@
       document.getElementById('kpiMaxJackpot').innerText = '$' + maxJackpot.toLocaleString();
       document.getElementById('kpiMaxPeriod').innerText = maxPeriod ? `開出期別: ${maxPeriod}` : '尚無開出紀錄';
 
-      // 找出頻率最高前 15 名
+      // 找出頻率最高前 16 名
       const sortedFreq = Object.entries(zone1Counts)
         .map(([num, count]) => ({ num: parseInt(num), count }))
         .sort((a, b) => b.count - a.count);
@@ -1994,7 +2500,7 @@
       const dateStr = (r.lotteryDate || '').split('T')[0];
       document.getElementById('valDate').innerText = `開獎日期: ${dateStr}`;
 
-      const jp = r.super638JackpotAssign || {};
+      const jp = getJackpotAssign(r);
       const winCount = jp.winnerCount || 0;
       const perPrize = jp.perPrize || 0;
 
@@ -2004,22 +2510,28 @@
         document.getElementById('valJackpot').innerText = `頭獎槓龜 (無人中獎)`;
       }
 
-      // 第一區球號
+      const meta = GAME_META[currentGame] || GAME_META["super_lotto"];
+      const ballCount = currentGame === '3star' ? 3 : (currentGame === '4star' ? 4 : (currentGame === 'daily539' || currentGame === 'lotto39m' ? 5 : 6));
       const appear = r.drawNumberAppear || [];
       const zone1Row = document.getElementById('zone1Row');
       zone1Row.innerHTML = '';
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < ballCount && i < appear.length; i++) {
         const ball = document.createElement('div');
         ball.className = 'lotto-ball ball-gold';
         const val = appear[i] !== undefined ? appear[i] : '--';
-        ball.innerText = typeof val === 'number' && val < 10 ? `0${val}` : val;
+        ball.innerText = (typeof val === 'number' && val < 10 && currentGame !== '3star' && currentGame !== '4star') ? `0${val}` : val;
         zone1Row.appendChild(ball);
       }
 
-      // 第二區球號
+      // 第二區 / 特別號
       const zone2Ball = document.getElementById('zone2Ball');
-      const z2Val = appear[6] !== undefined ? appear[6] : '--';
-      zone2Ball.innerText = typeof z2Val === 'number' && z2Val < 10 ? `0${z2Val}` : z2Val;
+      if (meta.max_z2 > 0) {
+        const z2Val = appear[6] !== undefined ? appear[6] : '--';
+        zone2Ball.innerText = typeof z2Val === 'number' && z2Val < 10 ? `0${z2Val}` : z2Val;
+        zone2Ball.style.display = 'flex';
+      } else {
+        zone2Ball.style.display = 'none';
+      }
     }
 
     function filterByYear(year) {
@@ -2082,6 +2594,9 @@
     function renderTable() {
       const tbody = document.getElementById('tableBody');
       tbody.innerHTML = '';
+      const meta = GAME_META[currentGame] || GAME_META["super_lotto"];
+      const ballCount = currentGame === '3star' ? 3 : (currentGame === '4star' ? 4 : (currentGame === 'daily539' || currentGame === 'lotto39m' ? 5 : 6));
+      const hasZ2 = meta.max_z2 > 0;
 
       displayedRecords.forEach(r => {
         const tr = document.createElement('tr');
@@ -2095,18 +2610,18 @@
         const dateStr = (r.lotteryDate || '').split('T')[0];
         const appear = r.drawNumberAppear || [];
         const size = r.drawNumberSize || [];
-        const z2 = size[6] !== undefined ? (size[6] < 10 ? `0${size[6]}` : size[6]) : '';
-        const jp = r.super638JackpotAssign || {};
+        const z2 = hasZ2 ? (size[6] !== undefined ? (size[6] < 10 ? `0${size[6]}` : size[6]) : '-') : '-';
+        const jp = getJackpotAssign(r);
 
-        const appearMini = appear.slice(0, 6).map(n => `<span class="mini-ball ball-gold">${n < 10 ? '0' + n : n}</span>`).join('');
-        const sizeMini = size.slice(0, 6).map(n => `<span class="mini-ball ball-gold">${n < 10 ? '0' + n : n}</span>`).join('');
+        const appearMini = appear.slice(0, ballCount).map(n => `<span class="mini-ball ball-gold">${(n < 10 && currentGame !== '3star' && currentGame !== '4star') ? '0' + n : n}</span>`).join('');
+        const sizeMini = size.slice(0, ballCount).map(n => `<span class="mini-ball ball-gold">${(n < 10 && currentGame !== '3star' && currentGame !== '4star') ? '0' + n : n}</span>`).join('');
 
         tr.innerHTML = `
           <td class="cell-period">第 ${r.period} 期</td>
           <td style="color: var(--text-muted);">${dateStr}</td>
           <td><div class="mini-balls">${appearMini}</div></td>
           <td><div class="mini-balls">${sizeMini}</div></td>
-          <td><span class="mini-ball ball-red">${z2}</span></td>
+          <td><span class="mini-ball ball-red" style="${hasZ2 ? '' : 'display:none;'}">${z2}</span></td>
           <td style="text-align: center; font-weight: 600;">${jp.winnerCount || 0}</td>
           <td style="color: ${jp.winnerCount > 0 ? 'var(--gold-primary)' : 'inherit'}; font-weight: 600;">
             ${jp.winnerCount > 0 ? '$' + (jp.perPrize || 0).toLocaleString() : '-'}
@@ -2118,17 +2633,22 @@
     }
 
     function downloadCsv() {
-      window.location.href = '/api/export/csv';
+      window.location.href = `/api/export/csv?game=${currentGame}`;
     }
 
     async function triggerSync() {
       const btn = document.getElementById('btnSync');
       btn.innerText = '⏳ 連線同步中...';
       btn.disabled = true;
+      const gameName = currentGame === 'lotto649' ? '大樂透' : '威力彩';
       try {
-        const res = await fetch('/api/sync', { method: 'POST' });
+        const res = await fetch('/api/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ game: currentGame })
+        });
         const result = await res.json();
-        alert(`同步完成！目前共整合 ${result.count} 期威力彩開獎紀錄。`);
+        alert(`同步完成！目前共整合 ${result.count} 期${gameName}開獎紀錄。`);
         await loadData();
       } catch (err) {
         alert('同步過程發生錯誤，請查看伺服器紀錄。');
@@ -2163,10 +2683,6 @@
     // ==========================================
     // 🤖 AI 智慧運籌預測前端邏輯
     // ==========================================
-    let currentTicketCount = 5;
-    let aiStatusData = null;
-    let latestAiTickets = [];
-
     async function checkAiStatus() {
       try {
         const res = await fetch('/api/ai/status');
@@ -2211,18 +2727,22 @@
       const btn = document.getElementById('btnAiSolve');
       const btnText = document.getElementById('btnAiSolveText');
       const container = document.getElementById('ticketsContainer');
+      const meta = GAME_META[currentGame] || GAME_META["super_lotto"];
+      const maxBall = meta.max_z1;
+      const minBall = (currentGame === '3star' || currentGame === '4star') ? 0 : 1;
+      const gameTitle = meta.name;
 
       // 解析約束條件
       const lockedVal = (document.getElementById('inputLocked').value || '').replace(/，/g, ',').split(',');
       const locked_z1 = [];
       lockedVal.forEach(v => {
         const n = parseInt(v.trim());
-        if (!isNaN(n) && n >= 1 && n <= 38 && !locked_z1.includes(n)) {
+        if (!isNaN(n) && n >= minBall && n <= maxBall && !locked_z1.includes(n)) {
           locked_z1.push(n);
         }
       });
       if (locked_z1.length > 5) {
-        alert('第一區必選膽碼最多只能設定 5 個號碼！');
+        alert('必選膽碼最多只能設定 5 個號碼！');
         return;
       }
 
@@ -2230,7 +2750,7 @@
       const excluded_z1 = [];
       excludedVal.forEach(v => {
         const n = parseInt(v.trim());
-        if (!isNaN(n) && n >= 1 && n <= 38 && !excluded_z1.includes(n)) {
+        if (!isNaN(n) && n >= minBall && n <= maxBall && !excluded_z1.includes(n)) {
           excluded_z1.push(n);
         }
       });
@@ -2244,12 +2764,17 @@
       const z2SelectVal = document.getElementById('selectZ2').value;
       const locked_z2 = z2SelectVal ? parseInt(z2SelectVal) : null;
 
-      const sumMin = parseInt(document.getElementById('inputSumMin').value) || 85;
-      const sumMax = parseInt(document.getElementById('inputSumMax').value) || 155;
+      const defaultSumMin = meta.sum_min;
+      const defaultSumMax = meta.sum_max;
+      let sumMin = parseInt(document.getElementById('inputSumMin').value);
+      if (isNaN(sumMin)) sumMin = defaultSumMin;
+      let sumMax = parseInt(document.getElementById('inputSumMax').value);
+      if (isNaN(sumMax)) sumMax = defaultSumMax;
       const diversity = document.getElementById('chkDiversity').checked;
 
       const payload = {
         count: currentTicketCount,
+        game: currentGame,
         constraints: {
           locked_z1,
           excluded_z1,
@@ -2266,7 +2791,7 @@
       container.innerHTML = `
         <div style="text-align: center; padding: 40px; color: var(--text-muted);">
           <div style="font-size: 2.2rem; display: inline-block;">⚙️</div>
-          <div style="margin-top: 10px; font-weight: 600; color: var(--gold-primary);">AI 運籌 CP-SAT 正在求解最佳解空間...</div>
+          <div style="margin-top: 10px; font-weight: 600; color: var(--gold-primary);">${gameTitle} AI 運籌 CP-SAT 正在求解最佳解空間...</div>
           <div style="font-size: 0.8rem; margin-top: 4px; color: var(--text-muted);">計算遺漏值回補潛力、共現親和度矩陣與多注包牌覆蓋率</div>
         </div>
       `;
@@ -2285,13 +2810,34 @@
           document.getElementById('resultsCountTag').innerText = `共 ${latestAiTickets.length} 注`;
           renderAiTickets(latestAiTickets);
 
+          // 更新 SHA-256 存證卡片
+          if (data.commitment) {
+            latestCommitment = data.commitment;
+            const hashBox = document.getElementById('dispCommitHash');
+            if (hashBox) hashBox.innerText = data.commitment.commitment_hash;
+            const periodTag = document.getElementById('commitPeriodTag');
+            if (periodTag) periodTag.innerText = `第 ${data.commitment.period} 期鎖定`;
+            
+            // 預先填入驗證工具
+            const inpPayload = document.getElementById('inputVerifyPayload');
+            const inpHash = document.getElementById('inputVerifyHash');
+            if (inpPayload) inpPayload.value = data.commitment.canonical_payload;
+            if (inpHash) inpHash.value = data.commitment.commitment_hash;
+          }
+
           // 更新特徵工程摘要
           if (data.statistics_summary) {
             const sumry = data.statistics_summary;
             document.getElementById('aiStatDraws').innerText = `${sumry.total_draws} 期`;
             document.getElementById('aiStatAvgSum').innerText = `${sumry.avg_sum}`;
-            document.getElementById('aiStatHot').innerText = (sumry.hot_numbers_zone1 || []).slice(0, 5).map(n => (n < 10 ? '0' + n : n)).join(', ');
-            document.getElementById('aiStatHotZ2').innerText = (sumry.hot_numbers_zone2 || []).slice(0, 3).map(n => (n < 10 ? '0' + n : n)).join(', ');
+            document.getElementById('aiStatHot').innerText = (sumry.hot_numbers_zone1 || []).slice(0, 5).map(n => ((n < 10 && currentGame !== '3star' && currentGame !== '4star') ? '0' + n : n)).join(', ');
+            const z2HotEl = document.getElementById('aiStatHotZ2');
+            if (meta.max_z2 > 0) {
+              z2HotEl.innerText = (sumry.hot_numbers_zone2 || []).slice(0, 3).map(n => (n < 10 ? '0' + n : n)).join(', ');
+              z2HotEl.parentElement.style.display = 'flex';
+            } else {
+              z2HotEl.parentElement.style.display = 'none';
+            }
           }
         } else {
           container.innerHTML = `<div style="text-align: center; padding: 30px; color: #f87171;">求解失敗: ${data.message || '未知錯誤'}</div>`;
@@ -2314,6 +2860,9 @@
         return;
       }
 
+      const meta = GAME_META[currentGame] || GAME_META["super_lotto"];
+      const hasZ2 = meta.max_z2 > 0;
+
       tickets.forEach((t, idx) => {
         const card = document.createElement('div');
         card.className = 'ticket-card';
@@ -2326,8 +2875,8 @@
         const engine = t.engine || 'AI 運籌最佳化';
 
         // 渲染球號
-        const z1BallsHtml = z1.map(n => `<div class="ai-ball ball-gold">${n < 10 ? '0' + n : n}</div>`).join('');
-        const z2BallHtml = `<div class="ai-ball ball-red">${z2 < 10 ? '0' + z2 : z2}</div>`;
+        const z1BallsHtml = z1.map(n => `<div class="ai-ball ball-gold">${(n < 10 && currentGame !== '3star' && currentGame !== '4star') ? '0' + n : n}</div>`).join('');
+        const z2BallHtml = hasZ2 ? `<div class="ball-separator">+</div><div class="ai-ball ball-red">${z2 < 10 ? '0' + z2 : z2}</div>` : '';
 
         // 理由標籤
         const reasonsHtml = reasons.map(r => `<span class="reason-pill">${r}</span>`).join('');
@@ -2350,8 +2899,7 @@
 
           <div class="ticket-balls-wrap">
             <div class="ticket-balls-z1">${z1BallsHtml}</div>
-            <div class="ball-separator">+</div>
-            <div>${z2BallHtml}</div>
+            ${z2BallHtml}
           </div>
 
           <div class="ticket-reasons-wrap">
@@ -2366,9 +2914,17 @@
     function copySingleAiTicket(idx) {
       if (!latestAiTickets || !latestAiTickets[idx]) return;
       const t = latestAiTickets[idx];
-      const z1Str = (t.zone1 || []).map(n => (n < 10 ? '0' + n : n)).join(' ');
-      const z2Str = t.zone2 < 10 ? '0' + t.zone2 : t.zone2;
-      const text = `威力彩 AI 運籌推薦 第 ${t.ticket_no || idx + 1} 注: 第一區 [${z1Str}] + 第二區 [${z2Str}] (和值:${t.sum}, 評分:${t.score}分)`;
+      const meta = GAME_META[currentGame] || GAME_META["super_lotto"];
+      const z1Str = (t.zone1 || []).map(n => ((n < 10 && currentGame !== '3star' && currentGame !== '4star') ? '0' + n : n)).join(' ');
+      const gameName = meta.name;
+      let text = '';
+      if (meta.max_z2 > 0) {
+        const z2Str = t.zone2 < 10 ? '0' + t.zone2 : t.zone2;
+        const z2Name = currentGame === 'lotto649' ? '特別號' : '第二區';
+        text = `${gameName} AI 運籌推薦 第 ${t.ticket_no || idx + 1} 注: 正碼 [${z1Str}] + ${z2Name} [${z2Str}] (和值:${t.sum}, 評分:${t.score}分)`;
+      } else {
+        text = `${gameName} AI 運籌推薦 第 ${t.ticket_no || idx + 1} 注: 正碼 [${z1Str}] (和值:${t.sum}, 評分:${t.score}分)`;
+      }
       navigator.clipboard.writeText(text);
       showToast(`✅ 已複製 第 ${t.ticket_no || idx + 1} 注 至剪貼簿！`);
     }
@@ -2378,11 +2934,18 @@
         showToast('目前尚無可複製之推薦注單！');
         return;
       }
-      const lines = ['【台灣彩券 · 威力彩 AI 智慧運籌推薦注單】'];
+      const meta = GAME_META[currentGame] || GAME_META["super_lotto"];
+      const gameName = meta.name;
+      const lines = [`【台灣彩券 · ${gameName} AI 智慧運籌推薦注單】`];
       latestAiTickets.forEach((t, i) => {
-        const z1Str = (t.zone1 || []).map(n => (n < 10 ? '0' + n : n)).join(' ');
-        const z2Str = t.zone2 < 10 ? '0' + t.zone2 : t.zone2;
-        lines.push(`第 ${t.ticket_no || i + 1} 注: 第一區 [${z1Str}] + 第二區 [${z2Str}]  | 和值:${t.sum} | 評分:${t.score}分 | ${(t.reasons || []).join(', ')}`);
+        const z1Str = (t.zone1 || []).map(n => ((n < 10 && currentGame !== '3star' && currentGame !== '4star') ? '0' + n : n)).join(' ');
+        if (meta.max_z2 > 0) {
+          const z2Str = t.zone2 < 10 ? '0' + t.zone2 : t.zone2;
+          const z2Name = currentGame === 'lotto649' ? '特別號' : '第二區';
+          lines.push(`第 ${t.ticket_no || i + 1} 注: [${z1Str}] + ${z2Name} [${z2Str}]  | 和值:${t.sum} | 評分:${t.score}分 | ${(t.reasons || []).join(', ')}`);
+        } else {
+          lines.push(`第 ${t.ticket_no || i + 1} 注: [${z1Str}]  | 和值:${t.sum} | 評分:${t.score}分 | ${(t.reasons || []).join(', ')}`);
+        }
       });
       navigator.clipboard.writeText(lines.join('\n'));
       showToast(`✅ 已成功複製全部 ${latestAiTickets.length} 組推薦注單至剪貼簿！`);
@@ -2401,6 +2964,185 @@
       setTimeout(() => {
         toast.classList.remove('show');
       }, 2500);
+    }
+
+    // ==========================================
+    // 🛡️ 權威科學驗證與回測實驗室前端邏輯
+    // ==========================================
+    function copyCommitmentHash() {
+      if (!latestCommitment || !latestCommitment.commitment_hash) {
+        showToast('尚未生成當期 SHA-256 存證指紋！');
+        return;
+      }
+      navigator.clipboard.writeText(latestCommitment.commitment_hash);
+      showToast('✅ 已複製 SHA-256 數位指紋至剪貼簿！');
+    }
+
+    function copyFullProofPackage() {
+      if (!latestCommitment) {
+        showToast('尚未生成當期存證封包！');
+        return;
+      }
+      const gameName = currentGame === 'lotto649' ? '大樂透' : '威力彩';
+      const text = [
+        `【${gameName} AI 預測 · 開獎前 SHA-256 密碼學存證封包】`,
+        `預測目標期別: 第 ${latestCommitment.period} 期`,
+        `公開時間戳: ${latestCommitment.created_at}`,
+        `防作弊 SHA-256 指紋 (Public Hash Token):`,
+        latestCommitment.commitment_hash,
+        '',
+        '【封裝明文 Canonical Payload (開獎後供所有人驗證)】:',
+        latestCommitment.canonical_payload,
+        '',
+        '說明：本 Hash 具有單向不可逆性。開獎前已鎖定號碼，開獎後只要將上方明文丟入任何 SHA-256 計算器，若結果完全一致即證實絕無事後換號作弊。'
+      ].join('\n');
+
+      navigator.clipboard.writeText(text);
+      showToast('✅ 已複製完整公證封包！可直接發送至社群或存證。');
+    }
+
+    function toggleVerifyModal() {
+      const el = document.getElementById('verifyToolCollapse');
+      if (el) {
+        el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'block' : 'none';
+      }
+    }
+
+    async function runLiveHashVerification() {
+      const payload = (document.getElementById('inputVerifyPayload').value || '').trim();
+      const expectedHash = (document.getElementById('inputVerifyHash').value || '').trim().toLowerCase();
+      const resEl = document.getElementById('liveVerifyResult');
+
+      if (!payload || !expectedHash) {
+        resEl.innerHTML = '<span style="color: #ef4444;">請完整填入明文字串與預期雜湊碼！</span>';
+        return;
+      }
+
+      resEl.innerHTML = '<span style="color: #3b82f6;">正在進行密碼學運算...</span>';
+
+      try {
+        // 使用瀏覽器原生 SubtleCrypto 計算 SHA-256
+        const encoder = new TextEncoder();
+        const data = encoder.encode(payload);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const calcHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toLowerCase();
+
+        if (calcHash === expectedHash) {
+          resEl.innerHTML = `<span style="color: #10b981;">✅ 驗證成功！雜湊值 100% 吻合，絕無事後竄改！</span>`;
+          showToast('🎉 密碼學驗證通過：明文與開獎前發布之數位指紋完全一致！');
+        } else {
+          resEl.innerHTML = `<span style="color: #ef4444;">❌ 驗證失敗：內容已遭篡改或字串不符！</span>`;
+        }
+      } catch (err) {
+        // Fallback: 呼叫後端驗證 API
+        try {
+          const apiRes = await fetch('/api/ai/verify_commitment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ canonical_payload: payload, expected_hash: expectedHash })
+          });
+          const apiData = await apiRes.json();
+          if (apiData.status === 'ok' && apiData.result && apiData.result.is_valid) {
+            resEl.innerHTML = `<span style="color: #10b981;">✅ 驗證成功！雜湊值 100% 吻合！</span>`;
+          } else {
+            resEl.innerHTML = `<span style="color: #ef4444;">❌ 驗證失敗：雜湊值不吻合！</span>`;
+          }
+        } catch (apiErr) {
+          resEl.innerHTML = '<span style="color: #ef4444;">驗證運算發生異常。</span>';
+        }
+      }
+    }
+
+    function selectBacktestDraws(draws) {
+      selectedBacktestDraws = draws;
+      const pills = document.querySelectorAll('.verify-subcard .t-pill');
+      pills.forEach(p => {
+        if (parseInt(p.getAttribute('data-draws')) === draws) {
+          p.classList.add('active');
+        } else {
+          p.classList.remove('active');
+        }
+      });
+    }
+
+    function toggleBacktestLogs() {
+      const wrap = document.getElementById('backtestTableWrap');
+      if (wrap) {
+        wrap.style.display = (wrap.style.display === 'none' || wrap.style.display === '') ? 'block' : 'none';
+      }
+    }
+
+    async function triggerWalkForwardBacktest() {
+      const btn = document.getElementById('btnRunBacktest');
+      const btnText = document.getElementById('btnBacktestText');
+      btn.disabled = true;
+      const gameName = currentGame === 'lotto649' ? '大樂透' : '威力彩';
+      btnText.innerText = `⏳ 嚴格回測中 (${gameName} 近 ${selectedBacktestDraws} 期滾動盲測)...`;
+
+      try {
+        const res = await fetch(`/api/ai/backtest?game=${currentGame}&draws=${selectedBacktestDraws}&tickets=5`);
+        if (!res.ok) throw new Error('Backtest API error');
+        const data = await res.json();
+
+        if (data.status === 'success') {
+          const m = data.metrics || {};
+          const mult = m.alpha_multiplier || 1.0;
+          document.getElementById('valAlphaMultiplier').innerText = `${mult}x`;
+          document.getElementById('valAiHitRate').innerText = `${m.ai_win_rate}%`;
+          document.getElementById('valRandHitRate').innerText = `${m.rand_win_rate}%`;
+
+          // 渲染對照表格
+          renderBacktestTable(data.draw_logs || []);
+          document.getElementById('backtestTableWrap').style.display = 'block';
+
+          showToast(`🏆 嚴格回測完成！${gameName} AI 策略在近 ${data.backtest_draws} 期達到隨機選號 ${mult} 倍勝率！`);
+        } else {
+          alert('回測失敗: ' + (data.message || '未知錯誤'));
+        }
+      } catch (err) {
+        console.error('回測錯誤:', err);
+        alert('執行歷史回測失敗，請確認伺服器連線。');
+      } finally {
+        btn.disabled = false;
+        btnText.innerText = '🚀 啟動無未來數據步進回測';
+      }
+    }
+
+    function renderBacktestTable(logs) {
+      const tbody = document.getElementById('backtestTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (!logs || logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 15px;">無紀錄</td></tr>';
+        return;
+      }
+
+      logs.forEach(item => {
+        const tr = document.createElement('tr');
+        const z1Str = (item.actual_z1 || []).map(n => (n < 10 ? '0' + n : n)).join(' ');
+        const z2Str = item.actual_z2 < 10 ? '0' + item.actual_z2 : item.actual_z2;
+
+        const aiWon = item.ai_best_prize && !item.ai_best_prize.includes('未中獎') && !item.ai_best_prize.includes('0+0');
+        const randWon = item.rand_best_prize && !item.rand_best_prize.includes('未中獎') && !item.rand_best_prize.includes('0+0');
+
+        const aiBadge = `<span class="prize-badge ${aiWon ? 'prize-win' : 'prize-none'}">${item.ai_best_prize} (中${item.ai_hit_count}球)</span>`;
+        const randBadge = `<span class="prize-badge ${randWon ? 'prize-win' : 'prize-none'}">${item.rand_best_prize} (中${item.rand_hit_count}球)</span>`;
+
+        tr.innerHTML = `
+          <td><strong>第 ${item.period} 期</strong><div style="font-size: 0.72rem; color: var(--text-muted);">${item.date}</div></td>
+          <td><span style="color: #fbbf24; font-weight: 600;">[${z1Str}]</span> + <span style="color: #ef4444; font-weight: 700;">${z2Str}</span></td>
+          <td>${aiBadge}</td>
+          <td>${randBadge}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function scrollToVerificationSection() {
+      const el = document.getElementById('verificationSection');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
     }
   </script>
 

@@ -18,3 +18,9 @@ downloads/
 .idea/
 .DS_Store
 Thumbs.db
+
+# GitHub Actions (requires workflow scope on PAT, commit via GitHub UI instead)
+.github/
+*.bak
+upload.py
+

@@ -32,12 +32,12 @@ if %ERRORLEVEL% EQU 0 (
 echo [3/5] 切換至主分支 (main)...
 git branch -M main
 
-echo [4/5] 將專案檔案加入 Git 暫存區並提交...
+echo [4/5] 整理暫存區並提交 (自動排除需特殊 workflow 權限之 Actions 檔案)...
+git rm -r --cached .github 2>nul
+git add .gitignore
+git commit --amend -m "feat: update Taiwan Lottery multi-game support, AI optimizer, Web UI and history datasets" 2>nul
 git add -A
-git commit -m "feat: Taiwan Lottery Flask Web App with AI Optimizer on Render" 2>nul
-if %ERRORLEVEL% NEQ 0 (
-    echo [提示] 檔案已是最新狀態，無需重複提交。
-)
+git commit -m "feat: update Taiwan Lottery multi-game support, AI optimizer, Web UI and history datasets" 2>nul
 
 echo.
 echo [5/5] 正在推送 (git push) 至 GitHub...
@@ -51,11 +51,9 @@ if %ERRORLEVEL% EQU 0 (
 ) else (
     echo.
     echo ----------------------------------------------------------------------
-    echo [提示] 若推送失敗可能是因為遠端 GitHub 儲存庫已經有檔案 (例如建立時勾選了 README)。
-    echo 正在嘗試合併遠端檔案 (git pull --rebase)...
+    echo [提示] 正在嘗試合併遠端檔案並再次推送...
     echo ----------------------------------------------------------------------
     git pull origin main --rebase
-    echo 再次嘗試推送...
     git push -u origin main
     if %ERRORLEVEL% EQU 0 (
         echo.
@@ -64,7 +62,7 @@ if %ERRORLEVEL% EQU 0 (
         echo ======================================================================
     ) else (
         echo.
-        echo 若您想強制覆蓋遠端空儲存庫，可手動執行: git push -u origin main --force
+        echo 若您想強制覆蓋遠端儲存庫，可手動執行: git push -u origin main --force
     )
 )
 
