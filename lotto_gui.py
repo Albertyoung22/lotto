@@ -17,7 +17,7 @@ import csv
 import threading
 import time
 import webbrowser
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from collections import Counter, defaultdict
 import tkinter as tk
@@ -359,6 +359,11 @@ class TaiwanLottoApp(tk.Tk):
         self.tab_stats = tk.Frame(self.notebook, bg=COLOR_BG)
         self.notebook.add(self.tab_stats, text="  📊 號碼開出頻率與特徵工程速報  ")
         self.build_stats_tab()
+
+        # 頁籤 4: 📅 本週預計開獎行事曆 (週一~週日)
+        self.tab_calendar = tk.Frame(self.notebook, bg=COLOR_BG)
+        self.notebook.add(self.tab_calendar, text="  📅 本週開獎行事曆 (週一~週日)  ")
+        self.build_calendar_tab()
 
     def create_top_bar(self):
         top_bar = tk.Frame(self, bg=COLOR_HEADER, padx=16, pady=6)
@@ -717,6 +722,104 @@ class TaiwanLottoApp(tk.Tk):
         # 常態指標資訊文字
         self.lbl_norm_stats = tk.Label(right_frame, text="計算常態特徵中...", font=("Microsoft JhengHei UI", 9), bg=COLOR_HEADER, fg=COLOR_TEXT, justify="left", padx=10, pady=8, relief="groove")
         self.lbl_norm_stats.pack(fill="both", expand=True)
+
+    def build_calendar_tab(self):
+        """建立本週開獎行事曆頁籤 (星期一至星期日預計開獎項目)"""
+        pad = tk.Frame(self.tab_calendar, bg=COLOR_BG, padx=16, pady=12)
+        pad.pack(fill="both", expand=True)
+
+        now = datetime.now()
+        cur_w = now.weekday() # 0: Mon, 1: Tue, ..., 6: Sun
+
+        # 計算本週一的日期
+        monday = now - timedelta(days=cur_w)
+        sunday = monday + timedelta(days=6)
+
+        # 頂部說明與今日快報橫幅
+        top_banner = tk.Frame(pad, bg=COLOR_CARD, padx=16, pady=10, relief="groove")
+        top_banner.pack(fill="x", pady=(0, 12))
+
+        title_lbl = tk.Label(
+            top_banner, 
+            text=f"📅 本週預計開獎行事曆 ({monday.strftime('%m/%d')} ~ {sunday.strftime('%m/%d')})", 
+            font=("Microsoft JhengHei UI", 12, "bold"), 
+            bg=COLOR_CARD, 
+            fg=COLOR_GOLD
+        )
+        title_lbl.pack(side="left")
+
+        # 今日彩種
+        weekday_names = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
+        today_name = weekday_names[cur_w]
+
+        SCHEDULE = {
+            0: [("super_lotto", "🎱 威力彩", "20:30", True), ("daily539", "🎯 今彩539", "20:30", True), ("lotto39m", "🔢 39樂合彩", "20:30", False), ("3star", "⭐ 3星彩", "20:30", False), ("4star", "🌟 4星彩", "20:30", False), ("bingo", "🎰 BINGO", "每5分", False)],
+            1: [("lotto649", "💎 大樂透", "20:30", True), ("daily539", "🎯 今彩539", "20:30", True), ("lotto39m", "🔢 39樂合彩", "20:30", False), ("lotto49m", "🔢 49樂合彩", "20:30", False), ("3star", "⭐ 3星彩", "20:30", False), ("4star", "🌟 4星彩", "20:30", False), ("bingo", "🎰 BINGO", "每5分", False)],
+            2: [("daily539", "🎯 今彩539", "20:30", True), ("lotto39m", "🔢 39樂合彩", "20:30", False), ("3star", "⭐ 3星彩", "20:30", False), ("4star", "🌟 4星彩", "20:30", False), ("bingo", "🎰 BINGO", "每5分", False)],
+            3: [("super_lotto", "🎱 威力彩", "20:30", True), ("daily539", "🎯 今彩539", "20:30", True), ("lotto39m", "🔢 39樂合彩", "20:30", False), ("3star", "⭐ 3星彩", "20:30", False), ("4star", "🌟 4星彩", "20:30", False), ("bingo", "🎰 BINGO", "每5分", False)],
+            4: [("lotto649", "💎 大樂透", "20:30", True), ("daily539", "🎯 今彩539", "20:30", True), ("lotto39m", "🔢 39樂合彩", "20:30", False), ("lotto49m", "🔢 49樂合彩", "20:30", False), ("3star", "⭐ 3星彩", "20:30", False), ("4star", "🌟 4星彩", "20:30", False), ("bingo", "🎰 BINGO", "每5分", False)],
+            5: [("daily539", "🎯 今彩539", "20:30", True), ("lotto39m", "🔢 39樂合彩", "20:30", False), ("3star", "⭐ 3星彩", "20:30", False), ("4star", "🌟 4星彩", "20:30", False), ("bingo", "🎰 BINGO", "每5分", False)],
+            6: [("bingo", "🎰 BINGO", "每5分", False)]
+        }
+
+        today_games = [g[1] for g in SCHEDULE[cur_w]]
+        today_str = f"🔔 今天 ({today_name}) 預計開獎：{'、'.join(today_games)} (20:30 開出)"
+
+        today_lbl = tk.Label(top_banner, text=today_str, font=("Microsoft JhengHei UI", 10, "bold"), bg=COLOR_CARD, fg="#34d399")
+        today_lbl.pack(side="right")
+
+        # 星期一至星期日 7 欄網格容器
+        grid_frame = tk.Frame(pad, bg=COLOR_BG)
+        grid_frame.pack(fill="both", expand=True)
+
+        for day_idx in range(7):
+            grid_frame.columnconfigure(day_idx, weight=1)
+
+            col_date = monday + timedelta(days=day_idx)
+            is_today = (day_idx == cur_w)
+
+            bg_color = "#1e293b" if is_today else COLOR_CARD
+
+            day_card = tk.Frame(grid_frame, bg=bg_color, relief="groove", bd=2 if is_today else 1, padx=8, pady=8)
+            day_card.grid(row=0, column=day_idx, sticky="nsew", padx=4, pady=4)
+
+            # 標題 (星期幾與日期)
+            header_box = tk.Frame(day_card, bg=bg_color)
+            header_box.pack(fill="x", pady=(0, 6))
+
+            name_color = COLOR_GOLD if is_today else COLOR_TEXT
+            day_title = tk.Label(header_box, text=f"{weekday_names[day_idx]}", font=("Microsoft JhengHei UI", 10, "bold"), bg=bg_color, fg=name_color)
+            day_title.pack()
+
+            date_sub = tk.Label(header_box, text=col_date.strftime("%m/%d"), font=("Segoe UI", 9), bg=bg_color, fg=COLOR_MUTED)
+            date_sub.pack()
+
+            if is_today:
+                today_badge = tk.Label(header_box, text="★ 今日 TODAY ★", font=("Microsoft JhengHei UI", 8, "bold"), bg=COLOR_GOLD, fg="#000000", padx=4)
+                today_badge.pack(pady=(2, 0))
+
+            # 分隔線
+            sep = tk.Frame(day_card, height=1, bg="#334155")
+            sep.pack(fill="x", pady=(4, 6))
+
+            # 開獎彩種清單
+            games = SCHEDULE[day_idx]
+            for gid, gname, gtime, is_flag in games:
+                pill_bg = "#0f172a" if not is_flag else ("#3b2800" if "威力彩" in gname else "#1e3a8a")
+                pill_fg = COLOR_GOLD if "威力彩" in gname else ("#93c5fd" if "大樂透" in gname else COLOR_TEXT)
+                
+                pill = tk.Frame(day_card, bg=pill_bg, padx=4, pady=4, relief="flat")
+                pill.pack(fill="x", pady=2)
+
+                lbl_n = tk.Label(pill, text=gname, font=("Microsoft JhengHei UI", 9, "bold" if is_flag else "normal"), bg=pill_bg, fg=pill_fg)
+                lbl_n.pack(side="left")
+
+                lbl_t = tk.Label(pill, text=gtime, font=("Segoe UI", 8), bg=pill_bg, fg=COLOR_MUTED)
+                lbl_t.pack(side="right")
+
+            if day_idx == 6:
+                off_lbl = tk.Label(day_card, text="(其餘彩種週日公休)", font=("Microsoft JhengHei UI", 8, "italic"), bg=bg_color, fg=COLOR_MUTED)
+                off_lbl.pack(pady=10)
 
     # ==========================================
     # 資料讀取與刷新機制

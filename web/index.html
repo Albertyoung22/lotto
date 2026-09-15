@@ -1747,6 +1747,220 @@
         grid-template-columns: repeat(3, 1fr);
       }
     }
+
+    /* ============================================================ */
+    /* 📅 本週預計開獎行事曆 (Weekly Draw Calendar)                 */
+    /* ============================================================ */
+    .calendar-card {
+      background: linear-gradient(145deg, rgba(20, 26, 40, 0.85) 0%, rgba(13, 17, 26, 0.95) 100%);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 20px 24px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(14px);
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .calendar-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #f59e0b, #3b82f6, #10b981, #ec4899);
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .calendar-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .calendar-title {
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .calendar-week-badge {
+      font-size: 0.78rem;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      font-weight: 600;
+    }
+
+    .calendar-today-banner {
+      font-size: 0.85rem;
+      color: var(--gold-light);
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      padding: 6px 14px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+    }
+
+    .cal-day-col {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.25s ease;
+      min-height: 220px;
+    }
+
+    .cal-day-col:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .cal-day-col.is-today {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1.5px solid var(--gold-primary);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.18);
+      position: relative;
+    }
+
+    .cal-day-col.is-today::after {
+      content: 'TODAY';
+      position: absolute;
+      top: -8px;
+      right: 8px;
+      font-size: 0.65rem;
+      font-weight: 900;
+      background: var(--gold-gradient);
+      color: #000;
+      padding: 1px 6px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .cal-day-header {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 8px;
+      text-align: center;
+    }
+
+    .cal-day-name {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .cal-day-col.is-today .cal-day-name {
+      color: var(--gold-primary);
+    }
+
+    .cal-day-date {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .cal-games-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .cal-game-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 0.78rem;
+      color: var(--text-main);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .cal-game-pill:hover {
+      background: rgba(245, 158, 11, 0.18);
+      border-color: var(--gold-primary);
+      transform: scale(1.02);
+      color: #ffffff;
+    }
+
+    .cal-game-pill.flagship-super {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.35);
+      color: #fde68a;
+      font-weight: 700;
+    }
+
+    .cal-game-pill.flagship-649 {
+      background: rgba(59, 130, 246, 0.12);
+      border-color: rgba(59, 130, 246, 0.35);
+      color: #93c5fd;
+      font-weight: 700;
+    }
+
+    .cal-game-pill.flagship-539 {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      font-weight: 600;
+    }
+
+    .cal-game-time {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .cal-off-notice {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      padding: 18px 4px;
+      font-style: italic;
+    }
+
+    @media (max-width: 960px) {
+      .calendar-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 600px) {
+      .calendar-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1804,6 +2018,9 @@
       <button class="btn btn-verify-nav" onclick="scrollToVerificationSection()">
         <span>🛡️</span> 權威神準驗證
       </button>
+      <button class="btn btn-secondary" onclick="scrollToCalendar()">
+        <span>📅</span> 開獎行事曆
+      </button>
       <button class="btn btn-secondary" id="btnSync" onclick="triggerSync()">
         <span>🔄</span> 同步最新獎號
       </button>
@@ -1817,6 +2034,26 @@
   </header>
 
   <main>
+    <!-- 📅 本週預計開獎行事曆 (Weekly Draw Calendar) -->
+    <section class="calendar-card" id="calendarSection">
+      <div class="calendar-header">
+        <div class="calendar-title-wrap">
+          <div class="calendar-title">
+            <span>📅</span> 本週預計開獎行事曆
+          </div>
+          <span class="calendar-week-badge" id="calWeekRangeText">本週日程</span>
+        </div>
+        <div class="calendar-today-banner" id="calTodayBanner">
+          <span>🔔</span> <span id="calTodayStatus">今日排程載入中...</span>
+        </div>
+      </div>
+
+      <!-- 星期一至星期日 7 欄日曆卡片 -->
+      <div class="calendar-grid" id="calendarGrid">
+        <!-- 由 JavaScript 自動計算本週一~日日期與對應開獎彩種生成 -->
+      </div>
+    </section>
+
     <!-- 精選看板 (Showcase Hero) -->
     <section class="hero-card" id="heroCard">
       <div class="hero-header">
@@ -2398,6 +2635,7 @@
 
     // 頁面加載後抓取資料
     window.addEventListener('DOMContentLoaded', async () => {
+      renderWeeklyCalendar();
       document.getElementById('valNextDraw').innerText = `📅 下期預計開獎: ${getNextDrawDateInfo(currentGame)}`;
       initZipModalYears();
       await loadData();
@@ -3144,6 +3382,171 @@
     function scrollToVerificationSection() {
       const el = document.getElementById('verificationSection');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ==========================================
+    // 📅 本週開獎行事曆 (Weekly Draw Calendar)
+    // ==========================================
+    function renderWeeklyCalendar() {
+      const grid = document.getElementById('calendarGrid');
+      const weekRangeText = document.getElementById('calWeekRangeText');
+      const todayStatus = document.getElementById('calTodayStatus');
+      if (!grid) return;
+
+      const now = new Date();
+      const currentDay = now.getDay(); // 0: Sun, 1: Mon, ... 6: Sat
+      
+      // 計算本週一的日期 (若為週日則回推 6 天)
+      const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + mondayOffset);
+      monday.setHours(0, 0, 0, 0);
+
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      const mStartStr = `${monday.getMonth() + 1}/${monday.getDate()}`;
+      const mEndStr = `${sunday.getMonth() + 1}/${sunday.getDate()}`;
+      if (weekRangeText) {
+        weekRangeText.innerText = `${monday.getFullYear()} 第 ${getWeekNumber(now)} 週 (${mStartStr} ~ ${mEndStr})`;
+      }
+
+      // 彩種開獎排程定義 (1: 週一, ..., 7: 週日)
+      const SCHEDULE = {
+        1: {
+          dayName: "星期一",
+          games: [
+            { id: "super_lotto", name: "威力彩", icon: "🎱", time: "20:30", cls: "flagship-super" },
+            { id: "daily539",    name: "今彩539", icon: "🎯", time: "20:30", cls: "flagship-539" },
+            { id: "lotto39m",    name: "39樂合彩", icon: "🔢", time: "20:30" },
+            { id: "3star",       name: "3星彩",   icon: "⭐", time: "20:30" },
+            { id: "4star",       name: "4星彩",   icon: "🌟", time: "20:30" },
+            { id: "bingo",       name: "BINGO",   icon: "🎰", time: "每5分" }
+          ]
+        },
+        2: {
+          dayName: "星期二",
+          games: [
+            { id: "lotto649",    name: "大樂透",   icon: "💎", time: "20:30", cls: "flagship-649" },
+            { id: "daily539",    name: "今彩539", icon: "🎯", time: "20:30", cls: "flagship-539" },
+            { id: "lotto39m",    name: "39樂合彩", icon: "🔢", time: "20:30" },
+            { id: "lotto49m",    name: "49樂合彩", icon: "🔢", time: "20:30" },
+            { id: "3star",       name: "3星彩",   icon: "⭐", time: "20:30" },
+            { id: "4star",       name: "4星彩",   icon: "🌟", time: "20:30" },
+            { id: "bingo",       name: "BINGO",   icon: "🎰", time: "每5分" }
+          ]
+        },
+        3: {
+          dayName: "星期三",
+          games: [
+            { id: "daily539",    name: "今彩539", icon: "🎯", time: "20:30", cls: "flagship-539" },
+            { id: "lotto39m",    name: "39樂合彩", icon: "🔢", time: "20:30" },
+            { id: "3star",       name: "3星彩",   icon: "⭐", time: "20:30" },
+            { id: "4star",       name: "4星彩",   icon: "🌟", time: "20:30" },
+            { id: "bingo",       name: "BINGO",   icon: "🎰", time: "每5分" }
+          ]
+        },
+        4: {
+          dayName: "星期四",
+          games: [
+            { id: "super_lotto", name: "威力彩",   icon: "🎱", time: "20:30", cls: "flagship-super" },
+            { id: "daily539",    name: "今彩539", icon: "🎯", time: "20:30", cls: "flagship-539" },
+            { id: "lotto39m",    name: "39樂合彩", icon: "🔢", time: "20:30" },
+            { id: "3star",       name: "3星彩",   icon: "⭐", time: "20:30" },
+            { id: "4star",       name: "4星彩",   icon: "🌟", time: "20:30" },
+            { id: "bingo",       name: "BINGO",   icon: "🎰", time: "每5分" }
+          ]
+        },
+        5: {
+          dayName: "星期五",
+          games: [
+            { id: "lotto649",    name: "大樂透",   icon: "💎", time: "20:30", cls: "flagship-649" },
+            { id: "daily539",    name: "今彩539", icon: "🎯", time: "20:30", cls: "flagship-539" },
+            { id: "lotto39m",    name: "39樂合彩", icon: "🔢", time: "20:30" },
+            { id: "lotto49m",    name: "49樂合彩", icon: "🔢", time: "20:30" },
+            { id: "3star",       name: "3星彩",   icon: "⭐", time: "20:30" },
+            { id: "4star",       name: "4星彩",   icon: "🌟", time: "20:30" },
+            { id: "bingo",       name: "BINGO",   icon: "🎰", time: "每5分" }
+          ]
+        },
+        6: {
+          dayName: "星期六",
+          games: [
+            { id: "daily539",    name: "今彩539", icon: "🎯", time: "20:30", cls: "flagship-539" },
+            { id: "lotto39m",    name: "39樂合彩", icon: "🔢", time: "20:30" },
+            { id: "3star",       name: "3星彩",   icon: "⭐", time: "20:30" },
+            { id: "4star",       name: "4星彩",   icon: "🌟", time: "20:30" },
+            { id: "bingo",       name: "BINGO",   icon: "🎰", time: "每5分" }
+          ]
+        },
+        7: {
+          dayName: "星期日",
+          games: [
+            { id: "bingo",       name: "BINGO",   icon: "🎰", time: "每5分" }
+          ],
+          notice: "其餘彩種週日公休"
+        }
+      };
+
+      let html = '';
+      let todayGameNames = [];
+
+      for (let i = 1; i <= 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + (i - 1));
+        
+        const isToday = (currentDay === 0 && i === 7) || (currentDay === i);
+        const sched = SCHEDULE[i];
+        const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
+
+        if (isToday) {
+          todayGameNames = sched.games.map(g => `${g.icon} ${g.name}`);
+        }
+
+        html += `
+          <div class="cal-day-col ${isToday ? 'is-today' : ''}">
+            <div class="cal-day-header">
+              <div class="cal-day-name">${sched.dayName}</div>
+              <div class="cal-day-date">${dateStr}</div>
+            </div>
+            <div class="cal-games-list">
+              ${sched.games.map(g => `
+                <div class="cal-game-pill ${g.cls || ''}" onclick="switchGame('${g.id}'); scrollToShowcase();" title="點擊切換至 ${g.name}">
+                  <span>${g.icon} ${g.name}</span>
+                  <span class="cal-game-time">${g.time}</span>
+                </div>
+              `).join('')}
+              ${sched.notice ? `<div class="cal-off-notice">${sched.notice}</div>` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      grid.innerHTML = html;
+
+      // 更新今日開獎快訊
+      if (todayStatus) {
+        const todayName = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"][currentDay];
+        const gamesStr = todayGameNames.join('、 ');
+        todayStatus.innerHTML = `<strong>今天 (${todayName}) 預計開獎：</strong>${gamesStr}（20:30 開獎）`;
+      }
+    }
+
+    function scrollToCalendar() {
+      const el = document.getElementById('calendarSection');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function scrollToShowcase() {
+      const el = document.getElementById('heroCard');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function getWeekNumber(d) {
+      d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+      return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
     }
   </script>
 
