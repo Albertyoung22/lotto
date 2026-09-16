@@ -70,13 +70,15 @@ try:
         LottoAnalyzer,
         LottoAIOptimizer,
         check_ortools_status,
-        generate_predictions
+        generate_predictions,
+        run_historical_backtest
     )
 except ImportError:
     LottoAnalyzer = None
     LottoAIOptimizer = None
     check_ortools_status = lambda: {"available": False, "engine": "啟發式約束優化器", "install_cmd": "pip install ortools"}
     generate_predictions = None
+    run_historical_backtest = None
 
 GAME_NAMES = {
     "super_lotto": "威力彩",
@@ -231,7 +233,9 @@ class LottoBall(tk.Canvas):
         highlight_size = s * 0.45
         self.create_oval(6, 4, 6 + highlight_size, 4 + highlight_size * 0.7, fill=fill_highlight, outline="")
         # 數字
-        if str(self.number).isdigit():
+        if isinstance(self.number, str):
+            text_val = self.number
+        elif str(self.number).isdigit():
             text_val = f"{int(self.number):02d}"
         else:
             text_val = str(self.number)
@@ -539,7 +543,11 @@ class TaiwanLottoApp(tk.Tk):
 
         # 啟動求解按鈕
         self.btn_ai_solve = ttk.Button(left_ctrl, text="⚡ 啟動 AI 運籌最佳化求解", style="Primary.TButton", command=self.on_start_solve)
-        self.btn_ai_solve.pack(fill="x", ipady=4, pady=(0, 10))
+        self.btn_ai_solve.pack(fill="x", ipady=4, pady=(0, 6))
+
+        # 啟動無未來步進回測按鈕
+        self.btn_ai_backtest = ttk.Button(left_ctrl, text="📈 啟動【威力彩】無未來步進回測", style="Secondary.TButton", command=self.on_start_backtest)
+        self.btn_ai_backtest.pack(fill="x", ipady=2, pady=(0, 10))
 
         # 特徵工程速報卡片
         self.stats_mini_card = tk.Frame(left_ctrl, bg=COLOR_HEADER, padx=10, pady=10, relief="groove")
@@ -983,28 +991,41 @@ class TaiwanLottoApp(tk.Tk):
         self.load_initial_data()
 
     def update_ai_controls_for_game(self):
-        has_zone2 = (self.current_game in ["super_lotto", "lotto649"])
+        proto = LottoAnalyzer([], game_type=self.current_game)
+        has_zone2 = proto.has_zone2
+        is_digit = (self.current_game in ["3star", "4star"])
+        min_digit = 0 if is_digit else 1
+        max_ball = proto.max_ball_z1
+        balls_count = proto.balls_count
+
+        # 更新膽碼與殺號提示
+        self.lbl_ai_locked.config(text=f"📌 必選膽碼 ({min_digit}~{max_ball}，逗號分隔，最多{min(5, balls_count - 1)}個):")
+        self.lbl_ai_excluded.config(text=f"❌ 排除殺號 ({min_digit}~{max_ball}，以逗號分隔):")
+
+        # 更新第二區特別號下拉選單
         if has_zone2:
-            self.lbl_ai_z2.config(text="🔴 第二區特別號指定:" if self.current_game == "super_lotto" else "🔴 特別號指定:")
-            self.combo_ai_z2.config(state="readonly")
+            special_title = "🔴 特別號指定:" if self.current_game == "lotto649" else "🔴 第二區特別號指定:"
+            self.lbl_ai_z2.config(text=special_title)
+            z2_max = proto.max_ball_z2
+            z2_opts = ["隨機/AI最佳化推薦"] + [f"{i:02d}" for i in range(1, z2_max + 1)]
+            self.combo_ai_z2.config(values=z2_opts, state="readonly")
+            self.combo_ai_z2.current(0)
         else:
             self.lbl_ai_z2.config(text="🔴 第二區特別號指定: (本彩種無特別號)")
-            self.combo_ai_z2.config(state="disabled")
+            self.combo_ai_z2.config(values=["不適用 (該彩種無特別號)"], state="disabled")
+            self.combo_ai_z2.current(0)
 
-        if self.current_game == "lotto649":
-            sum_min, sum_max = 115, 185
-        elif self.current_game in ["3star", "4star"]:
-            sum_min, sum_max = (0, 27) if self.current_game == "3star" else (0, 36)
-        elif self.current_game in ["daily539", "lotto39m"]:
-            sum_min, sum_max = 60, 140
-        else:
-            sum_min, sum_max = 85, 155
+        sum_min, sum_max = proto.default_sum_range
 
         self.lbl_ai_sum.config(text=f"和值區間限制 (建議 {sum_min} ~ {sum_max}):")
         self.entry_ai_sum_min.delete(0, tk.END)
         self.entry_ai_sum_min.insert(0, str(sum_min))
         self.entry_ai_sum_max.delete(0, tk.END)
         self.entry_ai_sum_max.insert(0, str(sum_max))
+
+        game_title = GAME_NAMES.get(self.current_game, self.current_game)
+        if hasattr(self, "btn_ai_backtest"):
+            self.btn_ai_backtest.config(text=f"📈 啟動【{game_title}】無未來步進回測")
 
     def get_game_paths(self):
         g = self.current_game
@@ -1175,24 +1196,31 @@ class TaiwanLottoApp(tk.Tk):
                 ))
 
         # 常態指標資訊
-        game_desc = "大樂透 (6/49)" if self.current_game == "lotto649" else "威力彩 (6/38+1/8)"
-        def_sum = "115 ~ 185" if self.current_game == "lotto649" else "85 ~ 155"
+        game_desc = GAME_NAMES.get(self.current_game, self.current_game)
+        s_range = getattr(self.analyzer, "default_sum_range", [85, 155])
+        def_sum = f"{s_range[0]} ~ {s_range[1]}"
+        has_z2 = getattr(self.analyzer, "has_zone2", False)
+        is_digit = self.current_game in ["3star", "4star"]
+
+        hot_z1_formatted = [str(n) if is_digit else f"{n:02d}" for n in summary.get('hot_numbers_zone1', [])[:5]]
+        hot_z2_formatted = [f"{n:02d}" for n in summary.get('hot_numbers_zone2', [])[:3]] if has_z2 else ["不適用 (無特別號)"]
+
         norm_txt = (
             f"【{game_desc} 歷史常態特徵大數據】\n"
-            f"• 歷史平均和值: {summary.get('avg_sum', 150.0 if self.current_game == 'lotto649' else 117.0)} (黃金常態區間: {def_sum})\n"
-            f"• 最常見奇偶比: {', '.join(summary.get('common_odd_even', ['3:3', '2:4']))}\n"
-            f"• 最常見大小比: {', '.join(summary.get('common_high_low', ['3:3', '4:2']))}\n"
-            f"• 最熱門 Top 5: {', '.join(f'{n:02d}' for n in summary.get('hot_numbers_zone1', [])[:5])}\n"
-            f"• 最熱門特別號: {', '.join(f'{n:02d}' for n in summary.get('hot_numbers_zone2', [])[:3])}"
+            f"• 歷史平均和值: {summary.get('avg_sum', sum(s_range)//2)} (黃金常態區間: {def_sum})\n"
+            f"• 最常見奇偶比: {', '.join(summary.get('common_odd_even', [])) or '標準常態'}\n"
+            f"• 最常見大小比: {', '.join(summary.get('common_high_low', [])) or '標準常態'}\n"
+            f"• 最熱門 Top 5: {', '.join(hot_z1_formatted)}\n"
+            f"• 最熱門特別號: {', '.join(hot_z2_formatted)}"
         )
         self.lbl_norm_stats.config(text=norm_txt)
 
         # 同步更新 AI 標籤頁的特徵速報
         self.lbl_stats_mini.config(text=(
             f"• 歷史分析樣本: {total_draws} 期 ({game_desc})\n"
-            f"• 歷史平均和值: {summary.get('avg_sum', 150.0 if self.current_game == 'lotto649' else 117.0)}\n"
-            f"• 熱門號 Top 5: {', '.join(f'{n:02d}' for n in summary.get('hot_numbers_zone1', [])[:5])}\n"
-            f"• 特別號 Top 3: {', '.join(f'{n:02d}' for n in summary.get('hot_numbers_zone2', [])[:3])}"
+            f"• 歷史平均和值: {summary.get('avg_sum', sum(s_range)//2)}\n"
+            f"• 熱門號 Top 5: {', '.join(hot_z1_formatted)}\n"
+            f"• 特別號 Top 3: {', '.join(hot_z2_formatted)}"
         ))
 
     # ==========================================
@@ -1208,7 +1236,11 @@ class TaiwanLottoApp(tk.Tk):
         # 解析注數
         count_str = self.combo_ai_count.get()
         count = int(count_str.split(" ")[0].replace("注", "")) if count_str else 5
-        max_ball = 49 if self.current_game == "lotto649" else 38
+
+        proto = LottoAnalyzer([], game_type=self.current_game)
+        max_ball = proto.max_ball_z1
+        min_digit = 0 if self.current_game in ["3star", "4star"] else 1
+        max_locked = min(5, proto.balls_count - 1)
 
         # 膽碼解析
         locked_z1 = []
@@ -1217,10 +1249,10 @@ class TaiwanLottoApp(tk.Tk):
             item = item.strip()
             if item.isdigit():
                 val = int(item)
-                if 1 <= val <= max_ball and val not in locked_z1:
+                if min_digit <= val <= max_ball and val not in locked_z1:
                     locked_z1.append(val)
-        if len(locked_z1) > 5:
-            messagebox.showerror("約束錯誤", "必選膽碼最多只能設定 5 個號碼！")
+        if len(locked_z1) > max_locked:
+            messagebox.showerror("約束錯誤", f"必選膽碼最多只能設定 {max_locked} 個號碼！")
             return
 
         # 殺號解析
@@ -1230,7 +1262,7 @@ class TaiwanLottoApp(tk.Tk):
             item = item.strip()
             if item.isdigit():
                 val = int(item)
-                if 1 <= val <= max_ball and val not in excluded_z1:
+                if min_digit <= val <= max_ball and val not in excluded_z1:
                     excluded_z1.append(val)
 
         conflict = set(locked_z1).intersection(set(excluded_z1))
@@ -1247,8 +1279,8 @@ class TaiwanLottoApp(tk.Tk):
             sum_min = int(self.entry_ai_sum_min.get().strip())
             sum_max = int(self.entry_ai_sum_max.get().strip())
         except ValueError:
-            sum_min = 115 if self.current_game == "lotto649" else 85
-            sum_max = 185 if self.current_game == "lotto649" else 155
+            sum_min = proto.default_sum_range[0]
+            sum_max = proto.default_sum_range[1]
 
         constraints = {
             "locked_z1": locked_z1,
@@ -1305,7 +1337,8 @@ class TaiwanLottoApp(tk.Tk):
             empty_lbl.pack(pady=40)
             return
 
-        has_zone2 = (self.current_game in ["super_lotto", "lotto649"])
+        proto = LottoAnalyzer([], game_type=self.current_game)
+        has_zone2 = proto.has_zone2
 
         for idx, t in enumerate(tickets):
             card = tk.Frame(self.ai_scrollable_frame, bg=COLOR_CARD, padx=12, pady=6, highlightbackground=COLOR_BORDER, highlightthickness=1)
@@ -1385,7 +1418,8 @@ class TaiwanLottoApp(tk.Tk):
 
     def copy_single_ticket(self, t):
         game_name = GAME_NAMES.get(self.current_game, self.current_game)
-        has_zone2 = (self.current_game in ["super_lotto", "lotto649"])
+        proto = LottoAnalyzer([], game_type=self.current_game)
+        has_zone2 = proto.has_zone2
         special_name = "特別號" if self.current_game == "lotto649" else "第二區"
 
         z1_nums = t.get("zone1", [])
@@ -1408,7 +1442,8 @@ class TaiwanLottoApp(tk.Tk):
             return
 
         game_name = GAME_NAMES.get(self.current_game, self.current_game)
-        has_zone2 = (self.current_game in ["super_lotto", "lotto649"])
+        proto = LottoAnalyzer([], game_type=self.current_game)
+        has_zone2 = proto.has_zone2
         special_name = "特別號" if self.current_game == "lotto649" else "第二區"
         lines = [f"【台灣彩券 · {game_name} AI 智慧運籌推薦注單】"]
         for t in self.ai_tickets:
@@ -1426,6 +1461,186 @@ class TaiwanLottoApp(tk.Tk):
         self.clipboard_append(full_text)
         self.lbl_ai_results_status.config(text=f"✅ 已成功複製全部 {len(self.ai_tickets)} 組注單至剪貼簿！")
         messagebox.showinfo("複製成功", f"已複製全部 {len(self.ai_tickets)} 組推薦注單至剪貼簿，可直接貼上使用！")
+
+    def on_start_backtest(self):
+        """開啟各彩種專屬之無未來時序步進回測對話框 (Walk-Forward Rolling Backtest)"""
+        if not self.records:
+            messagebox.showwarning("提示", "目前尚未載入歷史開獎資料，無法執行回測。")
+            return
+
+        game_name = GAME_NAMES.get(self.current_game, self.current_game)
+        proto = LottoAnalyzer([], game_type=self.current_game)
+        has_zone2 = proto.has_zone2
+        is_digits = self.current_game in ["3star", "4star"]
+
+        win = tk.Toplevel(self)
+        win.title(f"📈 【{game_name}】無未來數據嚴格歷史步進回測系統")
+        win.geometry("960x700")
+        win.configure(bg=COLOR_BG)
+        win.minsize(800, 600)
+        win.transient(self)
+
+        # 頂部控制面板
+        top_ctrl = tk.Frame(win, bg=COLOR_CARD, padx=16, pady=12, highlightbackground=COLOR_BORDER, highlightthickness=1)
+        top_ctrl.pack(fill="x", padx=12, pady=(12, 6))
+
+        tk.Label(top_ctrl, text=f"🎯 彩種：{game_name}", font=("Microsoft JhengHei UI", 12, "bold"), bg=COLOR_CARD, fg=COLOR_GOLD).pack(side="left", padx=(0, 16))
+
+        tk.Label(top_ctrl, text="回測期數:", font=("Microsoft JhengHei UI", 10), bg=COLOR_CARD, fg=COLOR_TEXT).pack(side="left", padx=(0, 4))
+        combo_draws = ttk.Combobox(top_ctrl, values=["10 期", "20 期", "30 期", "50 期"], width=7, state="readonly")
+        combo_draws.current(1)
+        combo_draws.pack(side="left", padx=(0, 14))
+
+        tk.Label(top_ctrl, text="每期注數:", font=("Microsoft JhengHei UI", 10), bg=COLOR_CARD, fg=COLOR_TEXT).pack(side="left", padx=(0, 4))
+        combo_tickets = ttk.Combobox(top_ctrl, values=["1 注", "3 注", "5 注", "10 注"], width=7, state="readonly")
+        combo_tickets.current(2)
+        combo_tickets.pack(side="left", padx=(0, 16))
+
+        btn_run = ttk.Button(top_ctrl, text="🚀 啟動盲測驗證", style="Primary.TButton")
+        btn_run.pack(side="left", padx=4)
+
+        lbl_hint = tk.Label(top_ctrl, text="嚴格無未來函數 | 歷史動態盲測", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_MUTED)
+        lbl_hint.pack(side="right")
+
+        # 進度條
+        p_frame = tk.Frame(win, bg=COLOR_BG)
+        p_frame.pack(fill="x", padx=12, pady=(2, 6))
+        pbar = ttk.Progressbar(p_frame, mode="indeterminate")
+        lbl_status = tk.Label(p_frame, text="請點擊【啟動盲測驗證】開始歷史滾動測試...", font=("Microsoft JhengHei UI", 9), bg=COLOR_BG, fg=COLOR_MUTED)
+        lbl_status.pack(side="left", pady=2)
+
+        # 4大指標卡片容器
+        cards_frame = tk.Frame(win, bg=COLOR_BG)
+        cards_frame.pack(fill="x", padx=12, pady=(0, 8))
+
+        def create_kpi_card(parent, title, val="--", color=COLOR_GOLD):
+            f = tk.Frame(parent, bg=COLOR_CARD, padx=12, pady=8, highlightbackground=COLOR_BORDER, highlightthickness=1)
+            f.pack(side="left", fill="both", expand=True, padx=4)
+            tk.Label(f, text=title, font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_MUTED).pack(anchor="w")
+            lbl_val = tk.Label(f, text=val, font=("Segoe UI", 15, "bold"), bg=COLOR_CARD, fg=color)
+            lbl_val.pack(anchor="w", pady=(2, 0))
+            return lbl_val
+
+        lbl_ai_win = create_kpi_card(cards_frame, "🤖 AI 步進中獎率", "--", "#34d399")
+        lbl_rand_win = create_kpi_card(cards_frame, "🎲 隨機快選基準率", "--", "#9ca3af")
+        lbl_alpha = create_kpi_card(cards_frame, "📈 超額 Alpha 倍數", "--", COLOR_GOLD)
+        lbl_roi = create_kpi_card(cards_frame, "💰 模擬投注回報率 (ROI)", "--", "#60a5fa")
+
+        # 明細表格容器
+        table_frame = tk.Frame(win, bg=COLOR_CARD, highlightbackground=COLOR_BORDER, highlightthickness=1)
+        table_frame.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+
+        columns = ("period", "date", "actual", "ai_prize", "ai_hit", "rand_prize")
+        tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=12)
+        tree.heading("period", text="期別")
+        tree.heading("date", text="開獎日期")
+        tree.heading("actual", text="官方開出獎號")
+        tree.heading("ai_prize", text="🤖 AI 最高榮獲獎項")
+        tree.heading("ai_hit", text="AI命中")
+        tree.heading("rand_prize", text="🎲 隨機對照組最高獎")
+
+        tree.column("period", width=95, anchor="center")
+        tree.column("date", width=105, anchor="center")
+        tree.column("actual", width=220, anchor="center")
+        tree.column("ai_prize", width=210, anchor="w")
+        tree.column("ai_hit", width=80, anchor="center")
+        tree.column("rand_prize", width=180, anchor="w")
+
+        tree_scroll = ttk.Scrollbar(table_frame, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=tree_scroll.set)
+        tree.pack(side="left", fill="both", expand=True)
+        tree_scroll.pack(side="right", fill="y")
+
+        tree.tag_configure("win", background="#1e3a2f", foreground="#6ee7b7")
+        tree.tag_configure("loss", background=COLOR_CARD, foreground=COLOR_TEXT)
+
+        def _do_backtest():
+            btn_run.config(state="disabled")
+            pbar.pack(side="right", fill="x", expand=True, padx=(10, 0))
+            pbar.start(10)
+            lbl_status.config(text=f"正在為【{game_name}】進行無未來歷史滾動步進盲測，請稍候...")
+
+            d_count = int(combo_draws.get().replace(" 期", ""))
+            t_count = int(combo_tickets.get().replace(" 注", ""))
+
+            def _thread_target():
+                try:
+                    json_file, _ = self.get_game_paths()
+                    from lotto_ai_optimizer import run_historical_backtest
+                    res = run_historical_backtest(json_file, test_draws=d_count, tickets_per_draw=t_count, game_type=self.current_game)
+                    win.after(0, lambda: _on_complete(res))
+                except Exception as ex:
+                    import traceback
+                    traceback.print_exc()
+                    err = str(ex)
+                    win.after(0, lambda: _on_error(err))
+
+            threading.Thread(target=_thread_target, daemon=True).start()
+
+        def _on_complete(res):
+            pbar.stop()
+            pbar.pack_forget()
+            btn_run.config(state="normal")
+
+            if res.get("status") != "success":
+                lbl_status.config(text="❌ 回測失敗: " + res.get("message", "未知錯誤"))
+                messagebox.showerror("回測失敗", res.get("message", "歷史資料期數不足"))
+                return
+
+            metrics = res.get("metrics", {})
+            ai_rate = metrics.get("ai_win_rate", 0)
+            rand_rate = metrics.get("rand_win_rate", 0)
+            alpha = metrics.get("alpha_multiplier", 1.0)
+            roi = metrics.get("ai_roi", 0)
+
+            lbl_ai_win.config(text=f"{ai_rate:.2f}%")
+            lbl_rand_win.config(text=f"{rand_rate:.2f}%")
+            lbl_alpha.config(text=f"{alpha:.2f}x", fg="#34d399" if alpha >= 1.2 else COLOR_GOLD)
+            roi_prefix = "+" if roi > 0 else ""
+            lbl_roi.config(text=f"{roi_prefix}{roi:.1f}%", fg="#34d399" if roi > 0 else ("#f87171" if roi < -20 else "#60a5fa"))
+
+            tested_draws = res.get("backtest_draws", 0)
+            tot_tickets = res.get("total_tickets_tested", 0)
+            ai_wins = metrics.get("ai_winning_tickets", 0)
+            lbl_status.config(text=f"✅ 成功完成 {tested_draws} 期 ({tot_tickets} 注) 盲測！AI 共中獎 {ai_wins} 注，Alpha 提升率為 {alpha:.2f} 倍。")
+
+            # 清空表格
+            for row in tree.get_children():
+                tree.delete(row)
+
+            # 填充表格
+            for log in res.get("draw_logs", []):
+                p = log.get("period", "")
+                d = log.get("date", "")
+                z1_list = log.get("actual_z1", [])
+                if is_digits:
+                    z1_str = " ".join(str(n) for n in z1_list)
+                else:
+                    z1_str = " ".join(f"{int(n):02d}" for n in z1_list)
+
+                z2 = log.get("actual_z2")
+                if log.get("has_zone2") and z2 is not None:
+                    actual_display = f"{z1_str} + {int(z2):02d}"
+                else:
+                    actual_display = z1_str
+
+                ai_pz = log.get("ai_best_prize", "未中獎")
+                ai_hits = f"{log.get('ai_hit_count', 0)} 球" if not is_digits else f"{log.get('ai_hit_count', 0)} 位"
+                rand_pz = log.get("rand_best_prize", "未中獎")
+
+                tag = "win" if log.get("ai_is_win") else "loss"
+                tree.insert("", "end", values=(f"第 {p} 期", d, actual_display, ai_pz, ai_hits, rand_pz), tags=(tag,))
+
+        def _on_error(err_str):
+            pbar.stop()
+            pbar.pack_forget()
+            btn_run.config(state="normal")
+            lbl_status.config(text="❌ 回測失敗: " + err_str)
+            messagebox.showerror("回測異常", f"回測過程發生錯誤：\n{err_str}")
+
+        btn_run.config(command=_do_backtest)
+        # 自動啟動第一次回測
+        win.after(100, _do_backtest)
 
     # ==========================================
     # 下載與匯出功能
@@ -1469,41 +1684,36 @@ class TaiwanLottoApp(tk.Tk):
         self.progress_bar.stop()
         self.progress_frame.pack_forget()
         self.refresh_all_views()
-        game_name = "大樂透" if self.current_game == "lotto649" else "威力彩"
+        game_name = GAME_NAMES.get(self.current_game, self.current_game)
         messagebox.showinfo("同步完成", f"已成功更新！目前資料庫共有 {len(self.records)} 期 {game_name} 開獎紀錄。")
 
     def export_csv(self):
         if not self.records:
             messagebox.showwarning("提示", "目前尚無資料可匯出！")
             return
-        prefix = "lotto649" if self.current_game == "lotto649" else "super_lotto"
+        prefix = self.current_game
         filepath = filedialog.asksaveasfilename(
             defaultextension=".csv",
             filetypes=[("CSV 試算表", "*.csv"), ("所有檔案", "*.*")],
             initialfile=f"{prefix}_{datetime.now().strftime('%Y%m%d')}.csv"
         )
         if filepath:
-            if self.current_game == "lotto649":
-                formatted = [parse_lotto649_record(r) for r in self.records]
-                with open(filepath, "w", newline="", encoding="utf-8-sig") as cf:
-                    writer = csv.DictWriter(cf, fieldnames=list(formatted[0].keys()))
-                    writer.writeheader()
-                    writer.writerows(formatted)
-            else:
-                save_to_csv(self.records, filepath)
+            from taiwan_lottery import save_to_csv
+            save_to_csv(self.records, filepath, game_type=self.current_game)
             messagebox.showinfo("匯出成功", f"資料已成功匯出至：\n{filepath}")
 
     def export_json(self):
         if not self.records:
             messagebox.showwarning("提示", "目前尚無資料可匯出！")
             return
-        prefix = "lotto649" if self.current_game == "lotto649" else "super_lotto"
+        prefix = self.current_game
         filepath = filedialog.asksaveasfilename(
             defaultextension=".json",
             filetypes=[("JSON 資料檔", "*.json"), ("所有檔案", "*.*")],
             initialfile=f"{prefix}_{datetime.now().strftime('%Y%m%d')}.json"
         )
         if filepath:
+            from taiwan_lottery import save_to_json
             save_to_json(self.records, filepath)
             messagebox.showinfo("匯出成功", f"JSON 資料已成功匯出至：\n{filepath}")
 
@@ -1698,14 +1908,17 @@ class TaiwanLottoApp(tk.Tk):
 
         tk.Label(self.ziwei_balls_box, text=f"🔮 紫微偏財專屬吉數 [{g_name}]：", font=("Microsoft JhengHei UI", 9, "bold"), bg=COLOR_CARD, fg=COLOR_GOLD).pack(side="left", padx=(0, 6))
 
+        proto = LottoAnalyzer([], game_type=self.current_game)
         for num in fortune["lucky_numbers_z1"][:6]:
-            ball = LottoBall(self.ziwei_balls_box, number=num, is_special=False, size=32, bg=COLOR_CARD)
+            num_str = f"{int(num):02d}" if str(num).isdigit() and self.current_game not in ["3star", "4star"] else str(num)
+            ball = LottoBall(self.ziwei_balls_box, number=num_str, is_special=False, size=32, bg=COLOR_CARD)
             ball.pack(side="left", padx=2)
 
-        if fortune["lucky_numbers_z2"]:
+        if proto.has_zone2 and fortune["lucky_numbers_z2"]:
             tk.Label(self.ziwei_balls_box, text="+", font=("Segoe UI", 12, "bold"), bg=COLOR_CARD, fg=COLOR_MUTED).pack(side="left", padx=4)
             for z2_num in fortune["lucky_numbers_z2"]:
-                z2_ball = LottoBall(self.ziwei_balls_box, number=z2_num, is_special=True, size=32, bg=COLOR_CARD)
+                z2_str = f"{int(z2_num):02d}" if str(z2_num).isdigit() else str(z2_num)
+                z2_ball = LottoBall(self.ziwei_balls_box, number=z2_str, is_special=True, size=32, bg=COLOR_CARD)
                 z2_ball.pack(side="left", padx=2)
 
         if not self.analyzer and self.records:
@@ -1750,17 +1963,22 @@ class TaiwanLottoApp(tk.Tk):
             balls_row = tk.Frame(card, bg=COLOR_CARD)
             balls_row.pack(anchor="w", pady=(2, 6))
 
+            proto = LottoAnalyzer([], game_type=self.current_game)
+            has_zone2 = proto.has_zone2
+
             z1_balls = t.get("zone1", [])
             z2_val = t.get("zone2", None)
 
             for num in z1_balls:
                 is_ziwei_hit = num in ziwei_lucky_set
-                ball = LottoBall(balls_row, number=num, is_special=is_ziwei_hit, size=38, bg=COLOR_CARD)
+                num_str = f"{int(num):02d}" if str(num).isdigit() and self.current_game not in ["3star", "4star"] else str(num)
+                ball = LottoBall(balls_row, number=num_str, is_special=is_ziwei_hit, size=38, bg=COLOR_CARD)
                 ball.pack(side="left", padx=2)
 
-            if z2_val is not None:
+            if has_zone2 and z2_val is not None:
                 tk.Label(balls_row, text="+", font=("Segoe UI", 14, "bold"), bg=COLOR_CARD, fg=COLOR_MUTED).pack(side="left", padx=4)
-                z2_ball = LottoBall(balls_row, number=z2_val, is_special=True, size=38, bg=COLOR_CARD)
+                z2_str = f"{int(z2_val):02d}" if str(z2_val).isdigit() else str(z2_val)
+                z2_ball = LottoBall(balls_row, number=z2_str, is_special=True, size=38, bg=COLOR_CARD)
                 z2_ball.pack(side="left", padx=2)
 
             reasons = t.get("reasons", [])

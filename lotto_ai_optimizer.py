@@ -135,25 +135,32 @@ class LottoAnalyzer:
 
         recent_window = min(30, self.total_draws)
         recent_cutoff = self.total_draws - recent_window
+        min_digit = 0 if self.game_type in ["3star", "4star"] else 1
 
         # 追蹤每個號碼最後開出的 index
-        last_seen_z1 = {n: -1 for n in range(1, self.max_ball_z1 + 1)}
-        last_seen_z2 = {n: -1 for n in range(1, self.max_ball_z2 + 1)}
+        last_seen_z1 = {n: -1 for n in range(min_digit, self.max_ball_z1 + 1)}
+        last_seen_z2 = {n: -1 for n in range(1, max(1, self.max_ball_z2) + 1)}
 
         for idx, r in enumerate(self.records):
+            appear_balls = r.get("drawNumberAppear", [])
             size_balls = r.get("drawNumberSize", [])
-            if len(size_balls) < 7:
+            if self.game_type in ["3star", "4star"]:
+                draw_nums = appear_balls or size_balls
+            else:
+                draw_nums = size_balls or appear_balls
+
+            if len(draw_nums) < self.balls_count:
                 continue
 
-            z1 = size_balls[:6]
-            z2 = size_balls[6]
+            z1 = draw_nums[:self.balls_count]
+            z2 = draw_nums[self.balls_count] if (self.has_zone2 and len(draw_nums) > self.balls_count) else None
 
             # 總頻率
             for b in z1:
-                if 1 <= b <= self.max_ball_z1:
+                if min_digit <= b <= self.max_ball_z1:
                     self.zone1_freq[b] += 1
                     last_seen_z1[b] = idx
-            if 1 <= z2 <= self.max_ball_z2:
+            if z2 is not None and 1 <= z2 <= self.max_ball_z2:
                 self.zone2_freq[z2] += 1
                 last_seen_z2[z2] = idx
 
@@ -161,14 +168,15 @@ class LottoAnalyzer:
             if idx >= recent_cutoff:
                 weight = 1.0 + (idx - recent_cutoff) / recent_window
                 for b in z1:
-                    if 1 <= b <= self.max_ball_z1:
+                    if min_digit <= b <= self.max_ball_z1:
                         self.zone1_recent_freq[b] += weight
 
-            # 雙號共現
-            for i in range(len(z1)):
-                for j in range(i + 1, len(z1)):
-                    p = tuple(sorted([z1[i], z1[j]]))
-                    self.pair_affinity[p] += 1
+            # 雙號共現 (僅在非3/4星彩之樂透型彩券計算)
+            if self.game_type not in ["3star", "4star"]:
+                for i in range(len(z1)):
+                    for j in range(i + 1, len(z1)):
+                        p = tuple(sorted([z1[i], z1[j]]))
+                        self.pair_affinity[p] += 1
 
             # 和值
             total_sum = sum(z1)
@@ -176,22 +184,22 @@ class LottoAnalyzer:
 
             # 奇偶比
             odds = sum(1 for b in z1 if b % 2 == 1)
-            self.odd_even_stats[f"{odds}:{6 - odds}"] += 1
+            self.odd_even_stats[f"{odds}:{self.balls_count - odds}"] += 1
 
             # 大小比
             highs = sum(1 for b in z1 if b >= self.high_low_threshold)
-            self.high_low_stats[f"{highs}:{6 - highs}"] += 1
+            self.high_low_stats[f"{highs}:{self.balls_count - highs}"] += 1
 
         # 計算遺漏值 (距離最後一期隔了幾期未開)
         last_idx = self.total_draws - 1
-        for n in range(1, self.max_ball_z1 + 1):
-            if last_seen_z1[n] != -1:
+        for n in range(min_digit, self.max_ball_z1 + 1):
+            if last_seen_z1.get(n, -1) != -1:
                 self.zone1_omission[n] = last_idx - last_seen_z1[n]
             else:
                 self.zone1_omission[n] = self.total_draws
 
-        for n in range(1, self.max_ball_z2 + 1):
-            if last_seen_z2[n] != -1:
+        for n in range(1, max(1, self.max_ball_z2) + 1):
+            if last_seen_z2.get(n, -1) != -1:
                 self.zone2_omission[n] = last_idx - last_seen_z2[n]
             else:
                 self.zone2_omission[n] = self.total_draws
@@ -199,9 +207,11 @@ class LottoAnalyzer:
         # 紀錄上期開獎獎號 (供連莊號、鄰號與模式防禦使用)
         if self.records:
             last_rec = self.records[-1]
-            last_balls = last_rec.get("drawNumberSize", [])
-            self.last_draw_z1 = set(last_balls[:self.balls_count])
-            self.last_draw_z2 = last_balls[self.balls_count] if len(last_balls) > self.balls_count else None
+            appear_balls = last_rec.get("drawNumberAppear", [])
+            size_balls = last_rec.get("drawNumberSize", [])
+            last_draw_nums = (appear_balls or size_balls) if self.game_type in ["3star", "4star"] else (size_balls or appear_balls)
+            self.last_draw_z1 = set(last_draw_nums[:self.balls_count])
+            self.last_draw_z2 = last_draw_nums[self.balls_count] if (self.has_zone2 and len(last_draw_nums) > self.balls_count) else None
         else:
             self.last_draw_z1 = set()
             self.last_draw_z2 = None
@@ -624,7 +634,13 @@ class LottoAIOptimizer:
                 best_combo = balls
 
         if not best_combo:
-            best_combo = sorted(random.sample([n for n in range(min_digit, max_z1 + 1) if n not in excluded_z1], num_needed))
+            avail_pool = [n for n in range(min_digit, max_z1 + 1) if n not in excluded_z1]
+            if not avail_pool:
+                avail_pool = list(range(min_digit, max_z1 + 1))
+            if self.analyzer.game_type in ["3star", "4star"]:
+                best_combo = [random.choice(avail_pool) for _ in range(num_needed)]
+            else:
+                best_combo = sorted(random.sample(avail_pool, min(num_needed, len(avail_pool))))
 
         # 第二區
         locked_z2 = constraints.get("locked_z2")
@@ -673,18 +689,14 @@ class LottoAIOptimizer:
         reasons.append(f"【{strat_name}】{strategy['desc'] if strategy else ''}")
 
         s = sum(z1)
-        if self.analyzer.is_lotto649:
-            if 130 <= s <= 170:
-                score += 5
-                reasons.append(f"和值黃金帶 ({s})")
-            else:
-                reasons.append(f"和值 {s}")
+        s_min, s_max = self.analyzer.default_sum_range
+        golden_min = int(s_min + (s_max - s_min) * 0.25)
+        golden_max = int(s_min + (s_max - s_min) * 0.75)
+        if golden_min <= s <= golden_max:
+            score += 5
+            reasons.append(f"和值黃金帶 ({s})")
         else:
-            if 100 <= s <= 135:
-                score += 5
-                reasons.append(f"和值黃金帶 ({s})")
-            else:
-                reasons.append(f"和值 {s}")
+            reasons.append(f"和值 {s}")
 
         odds = sum(1 for n in z1 if n % 2 == 1)
         evens = len(z1) - odds
@@ -719,12 +731,19 @@ class LottoAIOptimizer:
             score += 6
 
         else:
-            if odds in (3, ):
-                score += 5
-                reasons.append("奇偶比 3:3 完美平衡")
-            elif odds in (2, 4):
-                score += 3
-                reasons.append(f"奇偶比 {odds}:{evens} 標準常態")
+            if len(z1) == 6:
+                if odds == 3:
+                    score += 5
+                    reasons.append("奇偶比 3:3 完美平衡")
+                elif odds in (2, 4):
+                    score += 3
+                    reasons.append(f"奇偶比 {odds}:{evens} 標準常態")
+            elif len(z1) == 5:
+                if odds in (2, 3):
+                    score += 5
+                    reasons.append(f"奇偶比 {odds}:{evens} 標準平衡")
+            else:
+                reasons.append(f"奇偶比 {odds}:{evens}")
 
         score = min(99, max(75, score))
         return {"score": score, "reasons": reasons}
@@ -732,57 +751,112 @@ class LottoAIOptimizer:
 
 
 def evaluate_ticket_prize(z1_matches: int, z2_match: bool, game_type: str = "super_lotto") -> dict:
-    """計算威力彩 / 大樂透 獎項與獎金名稱"""
+    """計算各彩種官方獎項與獎金名稱"""
     gt = (game_type or "super_lotto").lower()
-    if gt == "lotto649":
+    if gt in ["lotto649", "649", "大樂透"]:
         # 大樂透官方獎項：頭獎(6)、貳獎(5+1)、參獎(5)、肆獎(4+1)、伍獎(4)、陸獎(3+1)、柒獎(2+1)、普獎(3)
         if z1_matches == 6:
-            return {"tier": "頭獎", "rank": 1, "is_win": True, "prize_desc": "頭獎 (6顆全中)"}
+            return {"tier": "頭獎", "rank": 1, "is_win": True, "prize_desc": "頭獎 (6顆全中)", "payout": 100000000}
         elif z1_matches == 5 and z2_match:
-            return {"tier": "貳獎", "rank": 2, "is_win": True, "prize_desc": "貳獎 (5+特別號)"}
+            return {"tier": "貳獎", "rank": 2, "is_win": True, "prize_desc": "貳獎 (5+特別號)", "payout": 2000000}
         elif z1_matches == 5 and not z2_match:
-            return {"tier": "參獎", "rank": 3, "is_win": True, "prize_desc": "參獎 (5顆一般號)"}
+            return {"tier": "參獎", "rank": 3, "is_win": True, "prize_desc": "參獎 (5顆一般號)", "payout": 50000}
         elif z1_matches == 4 and z2_match:
-            return {"tier": "肆獎", "rank": 4, "is_win": True, "prize_desc": "肆獎 (4+特別號)"}
+            return {"tier": "肆獎", "rank": 4, "is_win": True, "prize_desc": "肆獎 (4+特別號)", "payout": 12000}
         elif z1_matches == 4 and not z2_match:
-            return {"tier": "伍獎", "rank": 5, "is_win": True, "prize_desc": "伍獎 (4顆 $2,000)"}
+            return {"tier": "伍獎", "rank": 5, "is_win": True, "prize_desc": "伍獎 (4顆 $2,000)", "payout": 2000}
         elif z1_matches == 3 and z2_match:
-            return {"tier": "陸獎", "rank": 6, "is_win": True, "prize_desc": "陸獎 (3+特別號 $1,000)"}
+            return {"tier": "陸獎", "rank": 6, "is_win": True, "prize_desc": "陸獎 (3+特別號 $1,000)", "payout": 1000}
         elif z1_matches == 2 and z2_match:
-            return {"tier": "柒獎", "rank": 7, "is_win": True, "prize_desc": "柒獎 (2+特別號 $400)"}
+            return {"tier": "柒獎", "rank": 7, "is_win": True, "prize_desc": "柒獎 (2+特別號 $400)", "payout": 400}
         elif z1_matches == 3 and not z2_match:
-            return {"tier": "普獎", "rank": 8, "is_win": True, "prize_desc": "普獎 (3顆 $400)"}
+            return {"tier": "普獎", "rank": 8, "is_win": True, "prize_desc": "普獎 (3顆 $400)", "payout": 400}
         else:
-            return {"tier": "未中獎", "rank": 99, "is_win": False, "prize_desc": f"{z1_matches}+{1 if z2_match else 0}"}
+            return {"tier": "未中獎", "rank": 99, "is_win": False, "prize_desc": f"{z1_matches}+{1 if z2_match else 0}", "payout": 0}
+
+    elif gt in ["daily539", "539", "今彩539"]:
+        # 今彩539：頭獎(5顆 $800萬)、貳獎(4顆 $2萬)、參獎(3顆 $300)、肆獎(2顆 $50)
+        if z1_matches == 5:
+            return {"tier": "頭獎", "rank": 1, "is_win": True, "prize_desc": "頭獎 (5顆全中 $800萬)", "payout": 8000000}
+        elif z1_matches == 4:
+            return {"tier": "貳獎", "rank": 2, "is_win": True, "prize_desc": "貳獎 (4顆 $20,000)", "payout": 20000}
+        elif z1_matches == 3:
+            return {"tier": "參獎", "rank": 3, "is_win": True, "prize_desc": "參獎 (3顆 $300)", "payout": 300}
+        elif z1_matches == 2:
+            return {"tier": "肆獎", "rank": 4, "is_win": True, "prize_desc": "肆獎 (2顆 $50)", "payout": 50}
+        else:
+            return {"tier": "未中獎", "rank": 99, "is_win": False, "prize_desc": f"中{z1_matches}顆", "payout": 0}
+
+    elif gt in ["lotto39m", "39m", "39樂合彩", "lotto49m", "49m", "49樂合彩"]:
+        # 樂合彩：二合($1,250)、三合($22,500)、四合($212,500)
+        if z1_matches >= 4:
+            return {"tier": "四合", "rank": 1, "is_win": True, "prize_desc": "四合大獎 ($212,500)", "payout": 212500}
+        elif z1_matches == 3:
+            return {"tier": "三合", "rank": 2, "is_win": True, "prize_desc": "三合中獎 ($22,500)", "payout": 22500}
+        elif z1_matches == 2:
+            return {"tier": "二合", "rank": 3, "is_win": True, "prize_desc": "二合中獎 ($1,250)", "payout": 1250}
+        else:
+            return {"tier": "未中獎", "rank": 99, "is_win": False, "prize_desc": f"中{z1_matches}顆", "payout": 0}
+
+    elif gt in ["3star", "3星彩"]:
+        # 3星彩：壹獎 (全中 500倍 $12,500)、貳獎 (中2位 160倍 $4,000)、參獎 (中1位 80倍 $2,000)
+        if z1_matches == 3:
+            return {"tier": "壹獎", "rank": 1, "is_win": True, "prize_desc": "壹獎 (3位全中 500倍)", "payout": 12500}
+        elif z1_matches == 2:
+            return {"tier": "貳獎", "rank": 2, "is_win": True, "prize_desc": "貳獎 (對中2位 160倍)", "payout": 4000}
+        elif z1_matches == 1:
+            return {"tier": "參獎", "rank": 3, "is_win": True, "prize_desc": "參獎 (對中1位 80倍)", "payout": 2000}
+        else:
+            return {"tier": "未中獎", "rank": 99, "is_win": False, "prize_desc": f"對中{z1_matches}位", "payout": 0}
+
+    elif gt in ["4star", "4星彩"]:
+        # 4星彩：壹獎 (全中 5000倍 $125,000)、貳獎 (中3位 1200倍 $30,000)、參獎 (中2位 800倍 $20,000)
+        if z1_matches == 4:
+            return {"tier": "壹獎", "rank": 1, "is_win": True, "prize_desc": "壹獎 (4位全中 5000倍)", "payout": 125000}
+        elif z1_matches == 3:
+            return {"tier": "貳獎", "rank": 2, "is_win": True, "prize_desc": "貳獎 (對中3位 1200倍)", "payout": 30000}
+        elif z1_matches == 2:
+            return {"tier": "參獎", "rank": 3, "is_win": True, "prize_desc": "參獎 (對中2位 800倍)", "payout": 20000}
+        else:
+            return {"tier": "未中獎", "rank": 99, "is_win": False, "prize_desc": f"對中{z1_matches}位", "payout": 0}
+
+    elif gt in ["bingo", "賓果賓果"]:
+        if z1_matches >= 8:
+            return {"tier": f"{z1_matches}星大獎", "rank": 1, "is_win": True, "prize_desc": f"命中 {z1_matches} 球", "payout": 50000}
+        elif z1_matches >= 5:
+            return {"tier": f"{z1_matches}星中獎", "rank": 2, "is_win": True, "prize_desc": f"命中 {z1_matches} 球", "payout": 1000}
+        else:
+            return {"tier": "未中獎", "rank": 99, "is_win": False, "prize_desc": f"中{z1_matches}球", "payout": 0}
+
     else:
         # 威力彩官方獎項
         if z1_matches == 6 and z2_match:
-            return {"tier": "頭獎", "rank": 1, "is_win": True, "prize_desc": "頭獎 (6+1)"}
+            return {"tier": "頭獎", "rank": 1, "is_win": True, "prize_desc": "頭獎 (6+1)", "payout": 200000000}
         elif z1_matches == 6 and not z2_match:
-            return {"tier": "貳獎", "rank": 2, "is_win": True, "prize_desc": "貳獎 (6+0)"}
+            return {"tier": "貳獎", "rank": 2, "is_win": True, "prize_desc": "貳獎 (6+0)", "payout": 10000000}
         elif z1_matches == 5 and z2_match:
-            return {"tier": "參獎", "rank": 3, "is_win": True, "prize_desc": "參獎 (5+1)"}
+            return {"tier": "參獎", "rank": 3, "is_win": True, "prize_desc": "參獎 (5+1)", "payout": 150000}
         elif z1_matches == 5 and not z2_match:
-            return {"tier": "肆獎", "rank": 4, "is_win": True, "prize_desc": "肆獎 (5+0)"}
+            return {"tier": "肆獎", "rank": 4, "is_win": True, "prize_desc": "肆獎 (5+0)", "payout": 20000}
         elif z1_matches == 4 and z2_match:
-            return {"tier": "伍獎", "rank": 5, "is_win": True, "prize_desc": "伍獎 (4+1)"}
+            return {"tier": "伍獎", "rank": 5, "is_win": True, "prize_desc": "伍獎 (4+1)", "payout": 4000}
         elif z1_matches == 4 and not z2_match:
-            return {"tier": "陸獎", "rank": 6, "is_win": True, "prize_desc": "陸獎 (4+0)"}
+            return {"tier": "陸獎", "rank": 6, "is_win": True, "prize_desc": "陸獎 (4+0)", "payout": 800}
         elif z1_matches == 3 and z2_match:
-            return {"tier": "柒獎", "rank": 7, "is_win": True, "prize_desc": "柒獎 (3+1 $400)"}
+            return {"tier": "柒獎", "rank": 7, "is_win": True, "prize_desc": "柒獎 (3+1 $400)", "payout": 400}
         elif z1_matches == 2 and z2_match:
-            return {"tier": "捌獎", "rank": 8, "is_win": True, "prize_desc": "捌獎 (2+1 $200)"}
+            return {"tier": "捌獎", "rank": 8, "is_win": True, "prize_desc": "捌獎 (2+1 $200)", "payout": 200}
         elif z1_matches == 3 and not z2_match:
-            return {"tier": "玖獎", "rank": 9, "is_win": True, "prize_desc": "玖獎 (3+0 $100)"}
+            return {"tier": "玖獎", "rank": 9, "is_win": True, "prize_desc": "玖獎 (3+0 $100)", "payout": 100}
         elif z1_matches == 1 and z2_match:
-            return {"tier": "普獎", "rank": 10, "is_win": True, "prize_desc": "普獎 (1+1 $100)"}
+            return {"tier": "普獎", "rank": 10, "is_win": True, "prize_desc": "普獎 (1+1 $100)", "payout": 100}
         else:
-            return {"tier": "未中獎", "rank": 99, "is_win": False, "prize_desc": f"{z1_matches}+{1 if z2_match else 0}"}
+            return {"tier": "未中獎", "rank": 99, "is_win": False, "prize_desc": f"{z1_matches}+{1 if z2_match else 0}", "payout": 0}
 
 
 class LottoBacktester:
     """
-    威力彩 / 大樂透 嚴格步進式歷史回測引擎 (Walk-Forward Rolling Backtester)
+    全彩種嚴格步進式歷史回測引擎 (Walk-Forward Rolling Backtester)
     ========================================================================
     嚴格遵循時序因果律 (No Lookahead Bias / 不偷看未來資料)：
     - 回測第 k 期時，僅使用第 0 ~ k-1 期的開獎歷史進行特徵分析與求解。
@@ -792,13 +866,20 @@ class LottoBacktester:
     def __init__(self, records: list, game_type: str = "super_lotto"):
         self.records = sorted(records, key=lambda x: x.get("period", 0))
         self.game_type = (game_type or "super_lotto").lower()
-        self.is_lotto649 = (self.game_type == "lotto649")
+        proto = LottoAnalyzer([], game_type=self.game_type)
+        self.max_ball_z1 = proto.max_ball_z1
+        self.max_ball_z2 = proto.max_ball_z2
+        self.balls_count = proto.balls_count
+        self.has_zone2 = proto.has_zone2
+        self.is_lotto649 = (self.game_type in ["lotto649", "649", "大樂透"])
+        self.is_digits = (self.game_type in ["3star", "4star", "3星彩", "4星彩"])
+        self.min_digit = 0 if self.is_digits else 1
 
     def run_walk_forward(self, test_draws=20, tickets_per_draw=5) -> dict:
         """執行滾動步進盲測"""
         total = len(self.records)
         if total < 15:
-            return {"status": "error", "message": "歷史期數過少，至少需 15 期方可進行回測"}
+            return {"status": "error", "message": f"歷史期數過少 (僅 {total} 期)，至少需 15 期方可進行回測"}
 
         test_draws = min(test_draws, total - 10)
         start_idx = total - test_draws
@@ -807,27 +888,45 @@ class LottoBacktester:
         rand_total_balls_hit = 0
         ai_winning_tickets = 0
         rand_winning_tickets = 0
-        ai_total_tickets = test_draws * tickets_per_draw
-        rand_total_tickets = test_draws * tickets_per_draw
+        ai_total_payout = 0
+        rand_total_payout = 0
+
+        TICKET_COSTS = {
+            "super_lotto": 100,
+            "lotto649": 50,
+            "daily539": 50,
+            "lotto39m": 25,
+            "lotto49m": 25,
+            "3star": 25,
+            "4star": 25,
+            "bingo": 25
+        }
+        ticket_cost = TICKET_COSTS.get(self.game_type, 100 if self.has_zone2 else 50)
 
         ai_prize_counts = Counter()
         rand_prize_counts = Counter()
 
         draw_logs = []
-        max_ball = 49 if self.is_lotto649 else 38
 
         for idx in range(start_idx, total):
             actual_record = self.records[idx]
             actual_period = actual_record.get("period", idx)
-            actual_date = actual_record.get("lotteryDate", "")[:10]
+            actual_date = str(actual_record.get("lotteryDate", ""))[:10]
+
+            appear_balls = actual_record.get("drawNumberAppear", [])
             size_balls = actual_record.get("drawNumberSize", [])
-            if len(size_balls) < 7:
+            if self.is_digits:
+                draw_nums = appear_balls or size_balls
+            else:
+                draw_nums = size_balls or appear_balls
+
+            if len(draw_nums) < self.balls_count:
                 continue
 
-            actual_z1 = set(size_balls[:6])
-            actual_z2 = size_balls[6]
+            actual_z1 = draw_nums[:self.balls_count]
+            actual_z2 = draw_nums[self.balls_count] if (self.has_zone2 and len(draw_nums) > self.balls_count) else None
 
-            # 1. 訓練資料集：嚴格只使用當期之前的紀錄
+            # 1. 訓練資料集：嚴格只使用當期之前的紀錄 (絕無未來資料偷看)
             hist_subset = self.records[:idx]
             analyzer = LottoAnalyzer(hist_subset, game_type=self.game_type)
             optimizer = LottoAIOptimizer(analyzer)
@@ -838,24 +937,37 @@ class LottoBacktester:
             # 3. 對照組：純隨機快選 (Random Baseline)
             rand_tickets = []
             for _ in range(tickets_per_draw):
-                rand_z1 = sorted(random.sample(range(1, max_ball + 1), 6))
-                if self.is_lotto649:
-                    avail_z2 = [n for n in range(1, 50) if n not in rand_z1]
-                    rand_z2 = random.choice(avail_z2)
+                if self.is_digits:
+                    rand_z1 = [random.randint(0, 9) for _ in range(self.balls_count)]
+                    rand_z2 = None
                 else:
-                    rand_z2 = random.randint(1, 8)
+                    rand_z1 = sorted(random.sample(range(1, self.max_ball_z1 + 1), self.balls_count))
+                    if self.has_zone2:
+                        if self.is_lotto649:
+                            avail_z2 = [n for n in range(1, self.max_ball_z2 + 1) if n not in rand_z1]
+                            rand_z2 = random.choice(avail_z2) if avail_z2 else 1
+                        else:
+                            rand_z2 = random.randint(1, self.max_ball_z2)
+                    else:
+                        rand_z2 = None
                 rand_tickets.append({"zone1": rand_z1, "zone2": rand_z2})
 
             # 4. 比對 AI 成果
             period_ai_hits = []
-            period_ai_best_prize = {"rank": 999, "tier": "未中獎", "desc": "0+0"}
+            period_ai_best_prize = {"rank": 999, "tier": "未中獎", "desc": "未中獎"}
             for t in ai_tickets:
-                z1_matches = len(set(t["zone1"]).intersection(actual_z1))
-                z2_match = (t["zone2"] == actual_z2)
+                if self.is_digits:
+                    z1_matches = sum(1 for a, b in zip(t["zone1"], actual_z1) if a == b)
+                    z2_match = False
+                else:
+                    z1_matches = len(set(t["zone1"]).intersection(set(actual_z1)))
+                    z2_match = (t.get("zone2") == actual_z2) if self.has_zone2 else False
+
                 ai_total_balls_hit += z1_matches + (1 if z2_match else 0)
 
                 pz = evaluate_ticket_prize(z1_matches, z2_match, game_type=self.game_type)
                 ai_prize_counts[pz["tier"]] += 1
+                ai_total_payout += pz.get("payout", 0)
                 if pz["is_win"]:
                     ai_winning_tickets += 1
 
@@ -864,7 +976,7 @@ class LottoBacktester:
 
                 period_ai_hits.append({
                     "ticket": t["zone1"],
-                    "zone2": t["zone2"],
+                    "zone2": t.get("zone2"),
                     "z1_matches": z1_matches,
                     "z2_match": z2_match,
                     "prize": pz["tier"]
@@ -872,14 +984,20 @@ class LottoBacktester:
 
             # 5. 比對隨機對照組成果
             period_rand_hits = []
-            period_rand_best_prize = {"rank": 999, "tier": "未中獎", "desc": "0+0"}
+            period_rand_best_prize = {"rank": 999, "tier": "未中獎", "desc": "未中獎"}
             for t in rand_tickets:
-                z1_matches = len(set(t["zone1"]).intersection(actual_z1))
-                z2_match = (t["zone2"] == actual_z2)
+                if self.is_digits:
+                    z1_matches = sum(1 for a, b in zip(t["zone1"], actual_z1) if a == b)
+                    z2_match = False
+                else:
+                    z1_matches = len(set(t["zone1"]).intersection(set(actual_z1)))
+                    z2_match = (t.get("zone2") == actual_z2) if self.has_zone2 else False
+
                 rand_total_balls_hit += z1_matches + (1 if z2_match else 0)
 
                 pz = evaluate_ticket_prize(z1_matches, z2_match, game_type=self.game_type)
                 rand_prize_counts[pz["tier"]] += 1
+                rand_total_payout += pz.get("payout", 0)
                 if pz["is_win"]:
                     rand_winning_tickets += 1
 
@@ -888,7 +1006,7 @@ class LottoBacktester:
 
                 period_rand_hits.append({
                     "ticket": t["zone1"],
-                    "zone2": t["zone2"],
+                    "zone2": t.get("zone2"),
                     "z1_matches": z1_matches,
                     "z2_match": z2_match,
                     "prize": pz["tier"]
@@ -900,8 +1018,9 @@ class LottoBacktester:
             draw_logs.append({
                 "period": actual_period,
                 "date": actual_date,
-                "actual_z1": sorted(list(actual_z1)),
+                "actual_z1": actual_z1 if self.is_digits else sorted(list(actual_z1)),
                 "actual_z2": actual_z2,
+                "has_zone2": self.has_zone2,
                 "ai_best_prize": period_ai_best_prize["desc"],
                 "rand_best_prize": period_rand_best_prize["desc"],
                 "ai_is_win": ai_won,
@@ -914,19 +1033,24 @@ class LottoBacktester:
             })
 
         # 彙整統計量指標
-        ai_win_rate = round((ai_winning_tickets / max(1, ai_total_tickets)) * 100, 2)
-        rand_win_rate = round((rand_winning_tickets / max(1, rand_total_tickets)) * 100, 2)
+        actual_total_tickets = len(draw_logs) * tickets_per_draw
+        ai_win_rate = round((ai_winning_tickets / max(1, actual_total_tickets)) * 100, 2)
+        rand_win_rate = round((rand_winning_tickets / max(1, actual_total_tickets)) * 100, 2)
         alpha_multiplier = round(ai_win_rate / max(0.01, rand_win_rate), 2) if rand_win_rate > 0 else 1.5
 
-        ai_avg_balls = round(ai_total_balls_hit / max(1, ai_total_tickets), 2)
-        rand_avg_balls = round(rand_total_balls_hit / max(1, rand_total_tickets), 2)
+        ai_avg_balls = round(ai_total_balls_hit / max(1, actual_total_tickets), 2)
+        rand_avg_balls = round(rand_total_balls_hit / max(1, actual_total_tickets), 2)
+
+        total_cost = actual_total_tickets * ticket_cost
+        ai_roi = round(((ai_total_payout - total_cost) / max(1, total_cost)) * 100, 2)
+        rand_roi = round(((rand_total_payout - total_cost) / max(1, total_cost)) * 100, 2)
 
         return {
             "status": "success",
             "game_type": self.game_type,
             "backtest_draws": len(draw_logs),
             "tickets_per_draw": tickets_per_draw,
-            "total_tickets_tested": ai_total_tickets,
+            "total_tickets_tested": actual_total_tickets,
             "metrics": {
                 "ai_win_rate": ai_win_rate,
                 "rand_win_rate": rand_win_rate,
@@ -937,6 +1061,12 @@ class LottoBacktester:
                 "rand_avg_balls_per_ticket": rand_avg_balls,
                 "ai_winning_tickets": ai_winning_tickets,
                 "rand_winning_tickets": rand_winning_tickets,
+                "ticket_unit_cost": ticket_cost,
+                "total_cost": total_cost,
+                "ai_total_payout": ai_total_payout,
+                "rand_total_payout": rand_total_payout,
+                "ai_roi": ai_roi,
+                "rand_roi": rand_roi,
                 "ai_prizes": dict(ai_prize_counts),
                 "rand_prizes": dict(rand_prize_counts)
             },

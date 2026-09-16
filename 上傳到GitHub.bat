@@ -35,9 +35,9 @@ git branch -M main
 echo [4/5] 整理暫存區並提交 (自動排除需特殊 workflow 權限之 Actions 檔案)...
 git rm -r --cached .github 2>nul
 git add .gitignore
-git commit --amend -m "feat: update Taiwan Lottery multi-game support, AI optimizer, Web UI and history datasets" 2>nul
+git commit --amend -m "feat: enhance multi-game backtest, ROI metrics, lotto_gui backtest dialog, and modern 2-tier web navigation" 2>nul
 git add -A
-git commit -m "feat: update Taiwan Lottery multi-game support, AI optimizer, Web UI and history datasets" 2>nul
+git commit -m "feat: enhance multi-game backtest, ROI metrics, lotto_gui backtest dialog, and modern 2-tier web navigation" 2>nul
 
 echo.
 echo [5/5] 正在推送 (git push) 至 GitHub...

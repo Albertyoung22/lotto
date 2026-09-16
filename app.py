@@ -150,10 +150,8 @@ def sync_latest_data():
 
         cur_year = datetime.now().year
         print(f"[同步] 正在連線台彩官方更新 {game_type} 至 {cur_year} 年...")
-        if game_type == "lotto649":
-            download_lotto649_range(2024, cur_year, csv_file)
-        else:
-            download_super_lotto_range(2024, cur_year, csv_file)
+        from taiwan_lottery import download_game_range
+        download_game_range(game_type, 2024, cur_year, csv_file)
 
         total_count = 0
         if os.path.exists(json_file):
@@ -161,10 +159,17 @@ def sync_latest_data():
                 records = json.load(f)
                 total_count = len(records)
 
+        GAME_NAME_MAP = {
+            "super_lotto": "威力彩", "lotto649": "大樂透", "daily539": "今彩539",
+            "lotto39m": "39樂合彩", "lotto49m": "49樂合彩", "3star": "3星彩",
+            "4star": "4星彩", "bingo": "賓果賓果"
+        }
+        g_name = GAME_NAME_MAP.get(game_type, game_type)
+
         return jsonify({
             "status": "ok",
             "game": game_type,
-            "message": f"{'大樂透' if game_type == 'lotto649' else '威力彩'} 同步完成",
+            "message": f"{g_name} 同步完成",
             "count": total_count,
             "synced_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
@@ -180,7 +185,7 @@ def export_csv_file():
     if not os.path.exists(csv_file):
         return jsonify({"error": "CSV 檔案尚未生成"}), 404
     
-    file_prefix = "lotto649" if game_type == "lotto649" else "super_lotto"
+    file_prefix = game_type
     return send_file(
         csv_file,
         mimetype="text/csv",
@@ -270,7 +275,7 @@ def ziwei_recommend_api():
 def run_backtest_api():
     """
     執行無未來數據的嚴格歷史時序步進回測 (Walk-Forward Rolling Backtest)
-    - 參數: draws (回測期數), tickets (每期注數), game (super_lotto / lotto649)
+    - 參數: draws (回測期數), tickets (每期注數), game (支援全彩種: super_lotto / lotto649 / daily539 / lotto39m / lotto49m / 3star / 4star / bingo)
     - 回傳: AI vs 隨機快選 (Random Baseline) 勝率倍數、命中球數、獎項分佈與詳細對照清單
     """
     if request.method == "POST":

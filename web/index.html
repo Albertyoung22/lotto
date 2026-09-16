@@ -53,87 +53,174 @@
       overflow-x: hidden;
     }
 
-    /* 頂部導覽列 */
-    header {
-      backdrop-filter: blur(16px);
-      background: rgba(10, 12, 18, 0.85);
-      border-bottom: 1px solid var(--border-color);
+    /* 頂部雙層現代化導覽列 (Two-Tier Modern Navigation System) */
+    header.site-header {
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(10, 13, 22, 0.92);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       position: sticky;
       top: 0;
       z-index: 100;
-      padding: 14px 28px;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    }
+
+    /* 第一層：品牌識別 + 頁面錨點導航 + 核心操作工具 */
+    .header-main-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 10px 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      gap: 16px;
     }
 
     .brand-group {
       display: flex;
       align-items: center;
       gap: 12px;
+      flex-shrink: 0;
     }
 
     .brand-logo {
-      width: 42px;
-      height: 42px;
+      width: 44px;
+      height: 44px;
       border-radius: 12px;
       background: var(--gold-gradient);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.45);
       font-size: 24px;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+    }
+
+    .brand-logo:hover {
+      transform: scale(1.08) rotate(6deg);
+    }
+
+    .brand-text-box {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
     .brand-title {
       font-family: 'Outfit', sans-serif;
-      font-size: 1.35rem;
+      font-size: 1.18rem;
       font-weight: 700;
-      letter-spacing: -0.5px;
-      background: linear-gradient(90deg, #ffffff, #fde68a);
+      letter-spacing: -0.3px;
+      line-height: 1.2;
+      background: linear-gradient(90deg, #ffffff, #fef08a);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+    }
+
+    .brand-sub-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .brand-badge {
-      font-size: 0.75rem;
-      padding: 3px 8px;
-      border-radius: 20px;
-      background: rgba(245, 158, 11, 0.15);
-      color: var(--gold-primary);
-      border: 1px solid rgba(245, 158, 11, 0.3);
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.28);
       font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+
+    .brand-version {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-family: 'Outfit', sans-serif;
+    }
+
+    /* 導覽快捷跳轉錨點 (Nav Anchor Link Pills) */
+    .header-nav-anchors {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 3px 6px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-anchor-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      outline: none;
+      cursor: pointer;
+      color: #cbd5e1;
+      font-size: 0.83rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .nav-anchor-btn:hover {
+      background: rgba(245, 158, 11, 0.12);
+      color: #fef08a;
+      border-color: rgba(245, 158, 11, 0.3);
+      transform: translateY(-1px);
     }
 
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
+      flex-shrink: 0;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 18px;
-      border-radius: 10px;
-      font-size: 0.9rem;
+      gap: 7px;
+      padding: 7px 14px;
+      border-radius: 9px;
+      font-size: 0.84rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       border: 1px solid transparent;
       outline: none;
       text-decoration: none;
+      white-space: nowrap;
     }
 
     .btn-primary {
       background: var(--gold-gradient);
       color: #000;
-      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
     }
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+      box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4);
     }
 
     .btn-secondary {
@@ -156,48 +243,95 @@
       transform: translateY(-2px);
     }
 
-    /* 雙彩種切換器 (Game Switcher Segmented Control) */
+    /* 第二層：專屬 8 大彩種切換列 (Game Switcher Segmented Bar) */
+    .game-switch-bar-wrap {
+      background: rgba(12, 16, 25, 0.75);
+      padding: 6px 24px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      justify-content: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.02);
+    }
+
+    .game-switch-bar-wrap::-webkit-scrollbar {
+      display: none;
+    }
+
     .game-switch-tabs {
       display: inline-flex;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 4px;
-      border-radius: 12px;
-      border: 1px solid var(--border-color);
+      align-items: center;
       gap: 6px;
-      backdrop-filter: blur(10px);
+      flex-wrap: nowrap;
     }
 
     .game-tab {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding: 7px 16px;
+      gap: 6px;
+      padding: 6px 14px;
       border-radius: 9px;
-      font-size: 0.9rem;
-      font-weight: 700;
+      font-size: 0.85rem;
+      font-weight: 600;
       cursor: pointer;
-      color: var(--text-muted);
-      background: transparent;
-      border: 1px solid transparent;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       user-select: none;
+      white-space: nowrap;
+    }
+
+    .game-tab small {
+      font-size: 0.72rem;
+      opacity: 0.75;
+      font-weight: normal;
+      margin-left: 2px;
     }
 
     .game-tab:hover {
       color: #ffffff;
       background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
       transform: translateY(-1px);
     }
 
     .game-tab.active {
       background: var(--gold-gradient);
       color: #000000;
+      font-weight: 700;
       box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
       border-color: rgba(245, 158, 11, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .game-tab.active small {
+      color: #000000;
+      opacity: 0.85;
+      font-weight: 600;
     }
 
     .game-tab.active .tab-icon {
       filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+    }
+
+    @media (max-width: 1200px) {
+      .header-nav-anchors {
+        display: none;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .game-switch-bar-wrap {
+        justify-content: flex-start;
+      }
+      .brand-title {
+        font-size: 1.05rem;
+      }
+      .header-main-row {
+        padding: 8px 16px;
+      }
     }
 
     /* 主要容器 */
@@ -2057,74 +2191,91 @@
 </head>
 <body>
 
-  <!-- 頂部導航 -->
-  <header>
-    <div class="brand-group">
-      <div class="brand-logo" id="brandLogoIcon">🎱</div>
-      <div>
-        <div class="brand-title" id="brandMainTitle">台灣彩券 · 全彩種大數據與 AI 運籌系統</div>
+  <!-- 頂部雙層現代化導覽列 -->
+  <header class="site-header">
+    <!-- 第一層：品牌標誌 + 頁面錨點快速跳轉 + 核心操作工具 -->
+    <div class="header-main-row">
+      <!-- 品牌 Logo 與標題 -->
+      <div class="brand-group" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" style="cursor: pointer;">
+        <div class="brand-logo" id="brandLogoIcon" title="點擊回到頂部">🎱</div>
+        <div class="brand-text-box">
+          <div class="brand-title" id="brandMainTitle">台灣彩券 · 全彩種大數據與 AI 運籌系統</div>
+          <div class="brand-sub-row">
+            <span class="brand-badge" id="brandBadgeOfficial"><span class="badge-dot"></span> 第 5 屆官方連線</span>
+            <span class="brand-version">v5.0 Pro Cloud Engine</span>
+          </div>
+        </div>
       </div>
-      <span class="brand-badge" id="brandBadgeOfficial">第 5 屆官方連線</span>
+
+      <!-- 頁面錨點導航 (平滑跳轉各專區) -->
+      <nav class="header-nav-anchors">
+        <button type="button" class="nav-anchor-btn" onclick="scrollToAiSection()">
+          <span>🤖</span> AI 運籌
+        </button>
+        <button type="button" class="nav-anchor-btn" onclick="scrollToZiweiSection()">
+          <span>🔮</span> 紫微玄學
+        </button>
+        <button type="button" class="nav-anchor-btn" onclick="scrollToVerificationSection()">
+          <span>🛡️</span> 存證盲測
+        </button>
+        <button type="button" class="nav-anchor-btn" onclick="scrollToCalendar()">
+          <span>📅</span> 本週日曆
+        </button>
+        <button type="button" class="nav-anchor-btn" onclick="scrollToHistory()">
+          <span>📋</span> 歷史獎號
+        </button>
+      </nav>
+
+      <!-- 工具按鈕組 -->
+      <div class="header-actions">
+        <button type="button" class="btn btn-secondary" id="btnSync" onclick="triggerSync()" title="連線台彩官方同步最新一期獎號">
+          <span>🔄</span> 同步獎號
+        </button>
+        <button type="button" class="btn btn-primary" onclick="downloadCsv()" title="匯出全期開獎紀錄 (UTF-8-SIG CSV)">
+          <span>📊</span> 匯出 CSV
+        </button>
+        <button type="button" class="btn btn-success" onclick="openZipModal()" title="下載台彩歷年官方總表壓縮檔">
+          <span>📦</span> 官方總檔
+        </button>
+      </div>
     </div>
 
-    <!-- 8 大彩種切換器 -->
-    <div class="game-switch-tabs" id="gameSwitchTabs">
-      <button class="game-tab active" id="btnTab_super_lotto" onclick="switchGame('super_lotto')">
-        <span class="tab-icon">🎱</span>
-        <span class="tab-title">威力彩 (6/38)</span>
-      </button>
-      <button class="game-tab" id="btnTab_lotto649" onclick="switchGame('lotto649')">
-        <span class="tab-icon">💎</span>
-        <span class="tab-title">大樂透 (6/49)</span>
-      </button>
-      <button class="game-tab" id="btnTab_daily539" onclick="switchGame('daily539')">
-        <span class="tab-icon">🎯</span>
-        <span class="tab-title">今彩539 (5/39)</span>
-      </button>
-      <button class="game-tab" id="btnTab_lotto39m" onclick="switchGame('lotto39m')">
-        <span class="tab-icon">🔢</span>
-        <span class="tab-title">39樂合彩</span>
-      </button>
-      <button class="game-tab" id="btnTab_lotto49m" onclick="switchGame('lotto49m')">
-        <span class="tab-icon">🔢</span>
-        <span class="tab-title">49樂合彩</span>
-      </button>
-      <button class="game-tab" id="btnTab_3star" onclick="switchGame('3star')">
-        <span class="tab-icon">⭐</span>
-        <span class="tab-title">3星彩</span>
-      </button>
-      <button class="game-tab" id="btnTab_4star" onclick="switchGame('4star')">
-        <span class="tab-icon">🌟</span>
-        <span class="tab-title">4星彩</span>
-      </button>
-      <button class="game-tab" id="btnTab_bingo" onclick="switchGame('bingo')">
-        <span class="tab-icon">🎰</span>
-        <span class="tab-title">BINGO BINGO</span>
-      </button>
-    </div>
-
-    <div class="header-actions">
-      <button class="btn btn-ai-nav" onclick="scrollToAiSection()">
-        <span>🤖</span> AI 運籌預測
-      </button>
-      <button class="btn btn-secondary" onclick="scrollToZiweiSection()" style="border-color: rgba(168, 85, 247, 0.4); color: #c4b5fd;">
-        <span>🔮</span> 紫微玄學選號
-      </button>
-      <button class="btn btn-verify-nav" onclick="scrollToVerificationSection()">
-        <span>🛡️</span> 權威神準驗證
-      </button>
-      <button class="btn btn-secondary" onclick="scrollToCalendar()">
-        <span>📅</span> 開獎行事曆
-      </button>
-      <button class="btn btn-secondary" id="btnSync" onclick="triggerSync()">
-        <span>🔄</span> 同步最新獎號
-      </button>
-      <button class="btn btn-primary" onclick="downloadCsv()">
-        <span>📊</span> 匯出 CSV
-      </button>
-      <button class="btn btn-success" onclick="openZipModal()">
-        <span>📦</span> 官方歷年總檔 (ZIP)
-      </button>
+    <!-- 第二層：專屬 8 大彩種切換列 (Sleek Segmented Switcher Bar) -->
+    <div class="game-switch-bar-wrap">
+      <div class="game-switch-tabs" id="gameSwitchTabs">
+        <button type="button" class="game-tab active" id="btnTab_super_lotto" onclick="switchGame('super_lotto')">
+          <span class="tab-icon">🎱</span>
+          <span class="tab-title">威力彩 <small>(6/38)</small></span>
+        </button>
+        <button type="button" class="game-tab" id="btnTab_lotto649" onclick="switchGame('lotto649')">
+          <span class="tab-icon">💎</span>
+          <span class="tab-title">大樂透 <small>(6/49)</small></span>
+        </button>
+        <button type="button" class="game-tab" id="btnTab_daily539" onclick="switchGame('daily539')">
+          <span class="tab-icon">🎯</span>
+          <span class="tab-title">今彩539 <small>(5/39)</small></span>
+        </button>
+        <button type="button" class="game-tab" id="btnTab_lotto39m" onclick="switchGame('lotto39m')">
+          <span class="tab-icon">🔢</span>
+          <span class="tab-title">39樂合彩</span>
+        </button>
+        <button type="button" class="game-tab" id="btnTab_lotto49m" onclick="switchGame('lotto49m')">
+          <span class="tab-icon">🔢</span>
+          <span class="tab-title">49樂合彩</span>
+        </button>
+        <button type="button" class="game-tab" id="btnTab_3star" onclick="switchGame('3star')">
+          <span class="tab-icon">⭐</span>
+          <span class="tab-title">3星彩</span>
+        </button>
+        <button type="button" class="game-tab" id="btnTab_4star" onclick="switchGame('4star')">
+          <span class="tab-icon">🌟</span>
+          <span class="tab-title">4星彩</span>
+        </button>
+        <button type="button" class="game-tab" id="btnTab_bingo" onclick="switchGame('bingo')">
+          <span class="tab-icon">🎰</span>
+          <span class="tab-title">BINGO BINGO</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -2538,7 +2689,7 @@
         <div class="verify-subcard">
           <div class="verify-subcard-header">
             <div class="verify-subcard-title">
-              <span>📈 嚴格滾動盲測 vs 隨機快選 (Walk-Forward Test)</span>
+              <span id="lblBacktestSubcardTitle">📈 嚴格滾動盲測 vs 隨機快選 (Walk-Forward Test) · <strong style="color: #fbbf24;">威力彩</strong></span>
             </div>
             <div class="ticket-pills" style="margin: 0;">
               <button type="button" class="t-pill" data-draws="15" onclick="selectBacktestDraws(15)">15期</button>
@@ -2547,7 +2698,7 @@
             </div>
           </div>
 
-          <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+          <div id="lblBacktestDesc" style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
             模擬歷史真實環境（回測第 K 期時嚴格只使用第 1 ~ K-1 期數據），與電腦隨機快選 (Random Baseline) 進行 A/B 對照檢驗。
           </div>
 
@@ -2570,7 +2721,7 @@
           <!-- 啟動回測按鈕 -->
           <div style="display: flex; gap: 10px; align-items: center;">
             <button class="btn btn-ai-solve" id="btnRunBacktest" style="flex: 1; padding: 10px;" onclick="triggerWalkForwardBacktest()">
-              <span id="btnBacktestText">🚀 啟動無未來數據步進回測</span>
+              <span id="btnBacktestText">🚀 啟動【威力彩】無未來數據步進回測</span>
             </button>
             <button class="btn btn-secondary" style="font-size: 0.82rem; padding: 10px 14px;" onclick="toggleBacktestLogs()">
               <span>📋</span> 查看每期對照表
@@ -2579,15 +2730,15 @@
 
           <!-- 回測對照表容器 -->
           <div class="backtest-table-container" id="backtestTableWrap" style="display: none;">
-            <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.03); padding: 9px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); line-height: 1.5;">
+            <div id="lblBacktestTableHint" style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.03); padding: 9px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); line-height: 1.5;">
               <span style="font-size: 1.1rem;">💡</span>
-              <span><strong>指標說明</strong>：每期由 AI 與隨機快選各模擬購買 5 注號碼。「獎項標籤」為 5 注中<strong>單張最佳獎項</strong>；「累計中球」為當期 5 注加總命中第一區之<strong>總球數</strong>。<strong>點擊任意列可展開查看該期 5 注詳細號碼與命中狀況</strong>。</span>
+              <span><strong>指標說明</strong>：每期由 AI 與隨機快選各模擬購買 5 注號碼。「獎項標籤」為 5 注中<strong>單張最佳獎項</strong>；「累計中球」為當期 5 注加總命中之<strong>總球數</strong>。<strong>點擊任意列可展開查看該期 5 注詳細號碼與命中狀況</strong>。</span>
             </div>
             <table class="backtest-table">
               <thead>
                 <tr>
                   <th style="width: 20%;">期別 / 日期</th>
-                  <th style="width: 26%;">實際開獎 (6+1)</th>
+                  <th style="width: 26%;" id="thBacktestActual">實際開獎 (6+1)</th>
                   <th style="width: 27%;">AI 戰績 (單注最佳 / 5注累計)</th>
                   <th style="width: 27%;">隨機快選 (單注最佳 / 5注累計)</th>
                 </tr>
@@ -2613,7 +2764,7 @@
     </section>
 
     <!-- 搜尋與過濾區 -->
-    <section class="filter-section">
+    <section class="filter-section" id="recordsFilterSection">
       <div class="filter-left">
         <div class="search-box">
           <span class="search-icon">🔍</span>
@@ -2837,11 +2988,13 @@
         summaryEl.innerHTML = `【<strong>${fortune.year_ganzhi || ''}年</strong> 生辰】五行喜用：<span style="color: #fbbf24; font-weight:700;">【${fortune.favorable_element || ''}】</span> | ${fortune.summary_text || ''}`;
       }
 
+      const isDigits = (currentGame === '3star' || currentGame === '4star');
       const ballsBox = document.getElementById('webZiweiBallsBox');
       if (ballsBox) {
         ballsBox.innerHTML = `<span style="font-weight:700; color:#fbbf24;">🔮 專屬偏財吉數 [${gameName}]：</span>`;
         (fortune.lucky_numbers_z1 || []).slice(0, 6).forEach(n => {
-          ballsBox.innerHTML += `<div class="ai-ball" style="background: linear-gradient(135deg, #a855f7, #6366f1);">${String(n).padStart(2, '0')}</div>`;
+          const ballText = isDigits ? String(n) : String(n).padStart(2, '0');
+          ballsBox.innerHTML += `<div class="ai-ball" style="background: linear-gradient(135deg, #a855f7, #6366f1);">${ballText}</div>`;
         });
         if (fortune.lucky_numbers_z2 && fortune.lucky_numbers_z2.length > 0) {
           ballsBox.innerHTML += '<span style="color:#9ca3af; font-weight:bold;">+</span>';
@@ -2861,7 +3014,8 @@
         (t.zone1 || []).forEach(n => {
           const isHit = ziweiLuckySet.has(n);
           const style = isHit ? 'background: linear-gradient(135deg, #fbbf24, #d97706); box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);' : 'background: linear-gradient(135deg, #3b82f6, #1d4ed8);';
-          ballsHtml += `<div class="ai-ball" style="${style}">${String(n).padStart(2, '0')}</div>`;
+          const ballText = isDigits ? String(n) : String(n).padStart(2, '0');
+          ballsHtml += `<div class="ai-ball" style="${style}">${ballText}</div>`;
         });
 
         if (t.zone2 !== null && t.zone2 !== undefined) {
@@ -2972,6 +3126,38 @@
 
       // 下期時間更新
       document.getElementById('valNextDraw').innerText = `📅 下期預計開獎: ${getNextDrawDateInfo(currentGame)}`;
+
+      // 同步更新「無未來數據步進回測」區域為當前所選遊戲
+      const btnBacktestText = document.getElementById('btnBacktestText');
+      if (btnBacktestText) btnBacktestText.innerText = `🚀 啟動【${meta.name}】無未來數據步進回測`;
+
+      const subcardTitle = document.getElementById('lblBacktestSubcardTitle');
+      if (subcardTitle) subcardTitle.innerHTML = `<span>📈 嚴格滾動盲測 vs 隨機快選 (Walk-Forward Test) · <strong style="color: #fbbf24;">${meta.name}</strong></span>`;
+
+      const backtestDesc = document.getElementById('lblBacktestDesc');
+      if (backtestDesc) backtestDesc.innerText = `模擬歷史真實環境（回測第 K 期時嚴格只使用第 1 ~ K-1 期【${meta.name}】歷史數據），與電腦隨機快選 (Random Baseline) 進行 A/B 對照檢驗。`;
+
+      const thBacktestActual = document.getElementById('thBacktestActual');
+      if (thBacktestActual) {
+        if (meta.max_z2 > 0) {
+          thBacktestActual.innerText = `實際開獎 (${meta.name === '大樂透' ? '6+特' : '6+1'})`;
+        } else {
+          thBacktestActual.innerText = `實際開獎 (${meta.name === '3star' ? '3位數' : meta.name === '4star' ? '4位數' : (meta.name === 'daily539' || meta.name === 'lotto39m') ? '5顆' : '獎號'})`;
+        }
+      }
+
+      const backtestHint = document.getElementById('lblBacktestTableHint');
+      if (backtestHint) backtestHint.innerHTML = `<strong>指標說明</strong>：每期由 AI 與隨機快選各模擬購買 5 注【${meta.name}】號碼。「獎項標籤」為 5 注中<strong>單張最佳獎項</strong>；「累計中球」為當期 5 注加總命中之<strong>總球數</strong>。<strong>點擊任意列可展開查看該期 5 注詳細號碼與命中狀況</strong>。`;
+
+      // 清空前一個遊戲的回測指標與對照表
+      const elMult = document.getElementById('valAlphaMultiplier');
+      if (elMult) elMult.innerText = '--x';
+      const elAiWin = document.getElementById('valAiHitRate');
+      if (elAiWin) elAiWin.innerText = '--%';
+      const elRandWin = document.getElementById('valRandHitRate');
+      if (elRandWin) elRandWin.innerText = '--%';
+      const btBody = document.getElementById('backtestTableBody');
+      if (btBody) btBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">尚未執行【${meta.name}】回測，請點擊上方按鈕啟動。</td></tr>`;
 
       // 重新載入數據與 AI 運籌求解
       await loadData();
@@ -3540,10 +3726,24 @@
       showToast(`✅ 已成功複製全部 ${latestAiTickets.length} 組推薦注單至剪貼簿！`);
     }
 
-    function scrollToAiSection() {
-      const el = document.getElementById('aiSection');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    function scrollToSection(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        const headerOffset = 115;
+        const elementPosition = el.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
     }
+
+    function scrollToAiSection() { scrollToSection('aiSection'); }
+    function scrollToZiweiSection() { scrollToSection('ziweiSection'); }
+    function scrollToVerificationSection() { scrollToSection('verificationSection'); }
+    function scrollToCalendar() { scrollToSection('calendarSection'); }
+    function scrollToHistory() { scrollToSection('recordsFilterSection'); }
 
     function showToast(msg) {
       const toast = document.getElementById('toastNotify');
@@ -3666,7 +3866,8 @@
       const btn = document.getElementById('btnRunBacktest');
       const btnText = document.getElementById('btnBacktestText');
       btn.disabled = true;
-      const gameName = currentGame === 'lotto649' ? '大樂透' : '威力彩';
+      const meta = GAME_META[currentGame] || GAME_META['super_lotto'];
+      const gameName = meta.name || '威力彩';
       btnText.innerText = `⏳ 嚴格回測中 (${gameName} 近 ${selectedBacktestDraws} 期滾動盲測)...`;
 
       try {
@@ -3694,7 +3895,7 @@
         alert('執行歷史回測失敗，請確認伺服器連線。');
       } finally {
         btn.disabled = false;
-        btnText.innerText = '🚀 啟動無未來數據步進回測';
+        btnText.innerText = `🚀 啟動【${gameName}】無未來數據步進回測`;
       }
     }
 
@@ -3708,6 +3909,8 @@
         return;
       }
 
+      const isDigits = (currentGame === '3star' || currentGame === '4star');
+
       logs.forEach((item, idx) => {
         const tr = document.createElement('tr');
         tr.className = 'interactive-row';
@@ -3715,8 +3918,13 @@
         tr.title = '點擊展開/收合當期 5 注明細';
         tr.onclick = () => toggleBacktestDetail(idx);
 
-        const z1Str = (item.actual_z1 || []).map(n => (n < 10 ? '0' + n : n)).join(' ');
-        const z2Str = item.actual_z2 < 10 ? '0' + item.actual_z2 : item.actual_z2;
+        const z1Str = (item.actual_z1 || []).map(n => (isDigits ? String(n) : (n < 10 ? '0' + n : n))).join(' ');
+        const hasZ2 = (item.has_zone2 || (item.actual_z2 !== null && item.actual_z2 !== undefined && item.actual_z2 !== ''));
+        const z2Str = hasZ2 ? (item.actual_z2 < 10 ? '0' + item.actual_z2 : item.actual_z2) : '';
+
+        const actualDisplay = hasZ2
+          ? `<span style="color: #fbbf24; font-weight: 600;">[${z1Str}]</span> + <span style="color: #ef4444; font-weight: 700;">${z2Str}</span>`
+          : `<span style="color: #fbbf24; font-weight: 600;">[${z1Str}]</span>`;
 
         const aiWon = item.ai_is_win !== undefined 
           ? item.ai_is_win 
@@ -3730,11 +3938,13 @@
         const aiTitle = aiWon ? `🏆 ${item.ai_best_prize}` : `未中獎 (${item.ai_best_prize})`;
         const randTitle = randWon ? `🏆 ${item.rand_best_prize}` : `未中獎 (${item.rand_best_prize})`;
 
+        const hitUnit = isDigits ? '位' : '球';
+
         const aiBadge = `
           <div style="display: flex; flex-direction: column; gap: 3px;">
             <span class="prize-badge ${aiWon ? 'prize-win' : 'prize-none'}">${aiTitle}</span>
             <div style="font-size: 0.72rem; color: var(--text-muted);">
-              ${tCount}注累計中 <strong style="color: ${aiWon ? '#fbbf24' : '#93c5fd'}; font-weight: 600;">${item.ai_hit_count}</strong> 球
+              ${tCount}注累計中 <strong style="color: ${aiWon ? '#fbbf24' : '#93c5fd'}; font-weight: 600;">${item.ai_hit_count}</strong> ${hitUnit}
             </div>
           </div>
         `;
@@ -3742,7 +3952,7 @@
           <div style="display: flex; flex-direction: column; gap: 3px;">
             <span class="prize-badge ${randWon ? 'prize-win' : 'prize-none'}">${randTitle}</span>
             <div style="font-size: 0.72rem; color: var(--text-muted);">
-              ${tCount}注累計中 <strong style="color: ${randWon ? '#fbbf24' : '#9ca3af'}; font-weight: 600;">${item.rand_hit_count}</strong> 球
+              ${tCount}注累計中 <strong style="color: ${randWon ? '#fbbf24' : '#9ca3af'}; font-weight: 600;">${item.rand_hit_count}</strong> ${hitUnit}
             </div>
           </div>
         `;
@@ -3755,7 +3965,7 @@
               <span id="btArrow_${idx}" style="font-size: 0.68rem; color: #fbbf24;">▼ 明細</span>
             </div>
           </td>
-          <td><span style="color: #fbbf24; font-weight: 600;">[${z1Str}]</span> + <span style="color: #ef4444; font-weight: 700;">${z2Str}</span></td>
+          <td>${actualDisplay}</td>
           <td>${aiBadge}</td>
           <td>${randBadge}</td>
         `;
@@ -3771,29 +3981,37 @@
         const renderTicketList = (tickets) => {
           if (!tickets || tickets.length === 0) return '<div style="color: var(--text-muted); font-size: 0.75rem;">無注單紀錄</div>';
           return tickets.map((t, tIdx) => {
-            const z1Balls = (t.ticket || []).map(num => {
-              const numStr = num < 10 ? '0' + num : num;
-              const isHit = (item.actual_z1 || []).includes(num);
+            const z1Balls = (t.ticket || []).map((num, nPos) => {
+              const numStr = isDigits ? String(num) : (num < 10 ? '0' + num : num);
+              const isHit = isDigits
+                ? ((item.actual_z1 || [])[nPos] === num)
+                : (item.actual_z1 || []).includes(num);
               return isHit 
                 ? `<span style="display: inline-block; padding: 1px 5px; margin: 1px; border-radius: 4px; background: rgba(245, 158, 11, 0.35); color: #fbbf24; font-weight: 700; border: 1px solid rgba(245, 158, 11, 0.5);">${numStr}</span>`
                 : `<span style="display: inline-block; padding: 1px 4px; margin: 1px; color: #9ca3af;">${numStr}</span>`;
             }).join(' ');
 
-            const z2Str = t.zone2 < 10 ? '0' + t.zone2 : t.zone2;
-            const z2Hit = (t.zone2 === item.actual_z2);
-            const z2Ball = z2Hit
-              ? `<span style="display: inline-block; padding: 1px 5px; margin: 1px; border-radius: 4px; background: rgba(239, 68, 68, 0.35); color: #f87171; font-weight: 700; border: 1px solid rgba(239, 68, 68, 0.5);">${z2Str}</span>`
-              : `<span style="display: inline-block; padding: 1px 4px; margin: 1px; color: #6b7280;">${z2Str}</span>`;
+            let z2Html = '';
+            if (hasZ2 && t.zone2 !== null && t.zone2 !== undefined) {
+              const z2Str = t.zone2 < 10 ? '0' + t.zone2 : t.zone2;
+              const z2Hit = (t.zone2 === item.actual_z2);
+              z2Html = z2Hit
+                ? ` + <span style="display: inline-block; padding: 1px 5px; margin: 1px; border-radius: 4px; background: rgba(239, 68, 68, 0.35); color: #f87171; font-weight: 700; border: 1px solid rgba(239, 68, 68, 0.5);">${z2Str}</span>`
+                : ` + <span style="display: inline-block; padding: 1px 4px; margin: 1px; color: #6b7280;">${z2Str}</span>`;
+            }
 
             const isWinTier = t.prize && t.prize !== '未中獎';
+            const matchDesc = hasZ2
+              ? `${t.z1_matches}+${t.z2_match ? 1 : 0}`
+              : (isDigits ? `中${t.z1_matches}位` : `中${t.z1_matches}球`);
             const prizeBadge = isWinTier
-              ? `<span style="color: #fbbf24; font-weight: 600; font-size: 0.72rem; padding: 1px 5px; background: rgba(245, 158, 11, 0.2); border-radius: 4px;">🏆 ${t.prize} (${t.z1_matches}+${t.z2_match ? 1 : 0})</span>`
-              : `<span style="color: #6b7280; font-size: 0.72rem;">中 ${t.z1_matches}+${t.z2_match ? 1 : 0}</span>`;
+              ? `<span style="color: #fbbf24; font-weight: 600; font-size: 0.72rem; padding: 1px 5px; background: rgba(245, 158, 11, 0.2); border-radius: 4px;">🏆 ${t.prize} (${matchDesc})</span>`
+              : `<span style="color: #6b7280; font-size: 0.72rem;">${matchDesc}</span>`;
 
             return `
               <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 0; border-bottom: 1px dashed rgba(255,255,255,0.05); font-size: 0.78rem;">
                 <span style="color: var(--text-muted); font-size: 0.72rem; min-width: 32px;">注 ${tIdx + 1}:</span>
-                <span style="font-family: monospace;">[${z1Balls}] + ${z2Ball}</span>
+                <span style="font-family: monospace;">[${z1Balls}]${z2Html}</span>
                 <span>${prizeBadge}</span>
               </div>
             `;
@@ -3806,14 +4024,14 @@
               <div style="background: rgba(255, 255, 255, 0.02); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
                 <div style="font-weight: 600; font-size: 0.8rem; color: #fbbf24; margin-bottom: 6px; display: flex; justify-content: space-between;">
                   <span>🤖 AI 推薦 ${tCount} 注明細</span>
-                  <span style="font-size: 0.72rem; color: var(--text-muted);">共中 ${item.ai_hit_count} 顆一般號</span>
+                  <span style="font-size: 0.72rem; color: var(--text-muted);">共中 ${item.ai_hit_count} ${hitUnit}</span>
                 </div>
                 ${renderTicketList(item.ai_tickets)}
               </div>
               <div style="background: rgba(255, 255, 255, 0.02); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
                 <div style="font-weight: 600; font-size: 0.8rem; color: #9ca3af; margin-bottom: 6px; display: flex; justify-content: space-between;">
                   <span>🎲 隨機快選 ${tCount} 注明細</span>
-                  <span style="font-size: 0.72rem; color: var(--text-muted);">共中 ${item.rand_hit_count} 顆一般號</span>
+                  <span style="font-size: 0.72rem; color: var(--text-muted);">共中 ${item.rand_hit_count} ${hitUnit}</span>
                 </div>
                 ${renderTicketList(item.rand_tickets)}
               </div>

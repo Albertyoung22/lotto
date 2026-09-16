@@ -211,10 +211,11 @@ def calculate_ziwei_lotto_fortune(
     }
     game_name = GAME_NAME_MAP.get(g, "威力彩")
 
+    lucky_str = ', '.join(str(x) for x in lucky_z1[:6]) if min_digit == 0 else ', '.join(f'{x:02d}' for x in lucky_z1[:6])
     summary_text = (
         f"今日日柱【{day_stem}{day_branch}】，八字五行喜用為【{favorable_element}】。"
         f"紫微流日逢【{lu_star}化祿】與【{quan_star}化權】吉照，偏財氣場指數為 {wealth_index} 分。"
-        f"對應【{game_name}】推薦偏財吉數：{', '.join(f'{x:02d}' for x in lucky_z1[:6])}。"
+        f"對應【{game_name}】推薦偏財吉數：{lucky_str}。"
     )
 
     return {
