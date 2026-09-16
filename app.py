@@ -216,6 +216,56 @@ def predict_tickets():
     result = generate_predictions(json_file, num_tickets=count, constraints=constraints, game_type=game_type)
     return jsonify(result)
 
+@app.route("/api/ziwei_recommend", methods=["GET", "POST"])
+def ziwei_recommend_api():
+    """
+    紫微斗數與八字五行 + CP-SAT 雙引擎彩券預測 API
+    - 參數: birth_year, birth_month, birth_day, birth_hour, count, game
+    - 回傳: 紫微命理氣場速報、五行喜用神、偏財吉數與 CP-SAT 融合包牌結果
+    """
+    if request.method == "POST":
+        body = request.get_json(silent=True) or {}
+        b_year = body.get("birth_year")
+        b_month = body.get("birth_month")
+        b_day = body.get("birth_day")
+        b_hour = body.get("birth_hour", 12)
+        count = int(body.get("count", 5))
+        game = body.get("game") or request.args.get("game", "super_lotto")
+    else:
+        b_year = request.args.get("birth_year", type=int)
+        b_month = request.args.get("birth_month", type=int)
+        b_day = request.args.get("birth_day", type=int)
+        b_hour = request.args.get("birth_hour", 12, type=int)
+        count = request.args.get("count", 5, type=int)
+        game = request.args.get("game", "super_lotto")
+
+    ensure_data_exists(game)
+    game_type, json_file, _ = get_game_files(game)
+
+    import lotto_ziwei_engine
+    fortune = lotto_ziwei_engine.calculate_ziwei_lotto_fortune(
+        birth_year=b_year,
+        birth_month=b_month,
+        birth_day=b_day,
+        birth_hour=b_hour,
+        game_type=game_type
+    )
+
+    constraints = {
+        "ziwei_boost_map": fortune["boost_weights_z1"],
+        "ziwei_lucky_z1": fortune["lucky_numbers_z1"]
+    }
+
+    pred_res = generate_predictions(json_file, num_tickets=count, constraints=constraints, game_type=game_type)
+
+    return jsonify({
+        "status": "ok",
+        "game": game_type,
+        "fortune": fortune,
+        "tickets": pred_res.get("recommendations", []),
+        "engine": pred_res.get("engine", "CP-SAT + Ziwei Hybrid")
+    })
+
 @app.route("/api/ai/backtest", methods=["GET", "POST"])
 def run_backtest_api():
     """

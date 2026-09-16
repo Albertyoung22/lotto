@@ -476,12 +476,15 @@ class LottoAIOptimizer:
                 overlap = sum(x[num] for num in prev_balls if num in x)
                 model.Add(overlap <= max(1, num_needed - 2))
 
-            # 10. 目標函數 (結合策略權重)
+            # 10. 目標函數 (結合策略權重與紫微吉數加成)
+            ziwei_boost_map = constraints.get("ziwei_boost_map", {})
+            ziwei_lucky_z1 = set(constraints.get("ziwei_lucky_z1", []))
             obj_terms = []
             for i in range(min_digit, max_z1 + 1):
                 w = weights_z1.get(i, 50)
+                ziwei_extra = int(ziwei_boost_map.get(i, 0.0) * 40)
                 prior_usage = sum(1 for p in chosen_patterns if i in p)
-                adjusted_w = max(5, w - prior_usage * 15 + random.randint(-4, 4))
+                adjusted_w = max(5, w + ziwei_extra - prior_usage * 15 + random.randint(-4, 4))
                 obj_terms.append(adjusted_w * x[i])
 
             model.Maximize(sum(obj_terms))
@@ -511,6 +514,11 @@ class LottoAIOptimizer:
                     selected_z2 = None
 
                 evaluation = self._evaluate_ticket(selected_z1, selected_z2, strategy=strat)
+                reasons = list(evaluation["reasons"])
+                matched_ziwei = sorted([num for num in selected_z1 if num in ziwei_lucky_z1])
+                if matched_ziwei:
+                    reasons.append(f"🔮 命中紫微吉數：{', '.join(f'{x:02d}' for x in matched_ziwei)}")
+
                 results.append({
                     "ticket_no": ticket_idx + 1,
                     "engine": f"AI 運籌最佳化 (CP-SAT · {strat['name']})",
@@ -523,8 +531,9 @@ class LottoAIOptimizer:
                     "sum": sum(selected_z1),
                     "odd_even": f"{sum(1 for n in selected_z1 if n % 2 == 1)}:{sum(1 for n in selected_z1 if n % 2 == 0)}",
                     "high_low": f"{sum(1 for n in selected_z1 if n >= hl_thresh)}:{sum(1 for n in selected_z1 if n < hl_thresh)}",
-                    "score": evaluation["score"],
-                    "reasons": evaluation["reasons"]
+                    "score": evaluation["score"] + len(matched_ziwei) * 2,
+                    "reasons": reasons,
+                    "ziwei_matched_balls": matched_ziwei
                 })
             else:
                 # 備用啟發式填充
@@ -571,6 +580,9 @@ class LottoAIOptimizer:
             sum_max = min(max_z1 * num_needed, sum_max + 20)
 
         strat_w_z1, strat_w_z2 = self.analyzer.compute_ball_weights_by_strategy(strategy["id"])
+        ziwei_boost_map = constraints.get("ziwei_boost_map", {})
+        ziwei_lucky_z1 = set(constraints.get("ziwei_lucky_z1", []))
+
         candidates = [n for n in range(min_digit, max_z1 + 1) if n not in excluded_z1]
 
         best_combo = None
@@ -580,7 +592,7 @@ class LottoAIOptimizer:
             sample = set(locked_z1)
             remaining_needed = num_needed - len(sample)
             available = [c for c in candidates if c not in sample]
-            avail_weights = [strat_w_z1.get(c, 50) for c in available]
+            avail_weights = [max(1, strat_w_z1.get(c, 50) + int(ziwei_boost_map.get(c, 0.0) * 40)) for c in available]
 
             if remaining_needed > 0 and available:
                 picked = random.choices(available, weights=avail_weights, k=remaining_needed * 2)
@@ -606,7 +618,7 @@ class LottoAIOptimizer:
             if too_similar and len(prev_patterns) > 0:
                 continue
 
-            score = sum(strat_w_z1.get(b, 50) for b in balls)
+            score = sum(strat_w_z1.get(b, 50) + int(ziwei_boost_map.get(b, 0.0) * 40) for b in balls)
             if score > best_score:
                 best_score = score
                 best_combo = balls
@@ -628,6 +640,11 @@ class LottoAIOptimizer:
             z2 = None
 
         eval_res = self._evaluate_ticket(best_combo, z2, strategy=strategy)
+        reasons = list(eval_res["reasons"])
+        matched_ziwei = sorted([num for num in best_combo if num in ziwei_lucky_z1])
+        if matched_ziwei:
+            reasons.append(f"🔮 命中紫微吉數：{', '.join(f'{x:02d}' for x in matched_ziwei)}")
+
         return {
             "engine": f"啟發式多策略優化 ({strategy['name']})",
             "strategy": strategy["name"],
@@ -639,8 +656,9 @@ class LottoAIOptimizer:
             "sum": sum(best_combo),
             "odd_even": f"{sum(1 for n in best_combo if n % 2 == 1)}:{sum(1 for n in best_combo if n % 2 == 0)}",
             "high_low": f"{sum(1 for n in best_combo if n >= hl_thresh)}:{sum(1 for n in best_combo if n < hl_thresh)}",
-            "score": eval_res["score"],
-            "reasons": eval_res["reasons"]
+            "score": eval_res["score"] + len(matched_ziwei) * 2,
+            "reasons": reasons,
+            "ziwei_matched_balls": matched_ziwei
         }
 
     def _evaluate_ticket(self, z1, z2, strategy=None) -> dict:
@@ -877,6 +895,8 @@ class LottoBacktester:
                 })
 
             # 記錄當期對照明細
+            ai_won = (period_ai_best_prize["tier"] != "未中獎")
+            rand_won = (period_rand_best_prize["tier"] != "未中獎")
             draw_logs.append({
                 "period": actual_period,
                 "date": actual_date,
@@ -884,8 +904,11 @@ class LottoBacktester:
                 "actual_z2": actual_z2,
                 "ai_best_prize": period_ai_best_prize["desc"],
                 "rand_best_prize": period_rand_best_prize["desc"],
+                "ai_is_win": ai_won,
+                "rand_is_win": rand_won,
                 "ai_hit_count": sum(h["z1_matches"] for h in period_ai_hits),
                 "rand_hit_count": sum(h["z1_matches"] for h in period_rand_hits),
+                "tickets_count": tickets_per_draw,
                 "ai_tickets": period_ai_hits,
                 "rand_tickets": period_rand_hits
             })

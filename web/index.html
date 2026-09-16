@@ -843,23 +843,33 @@
       font-weight: 600;
     }
     .backtest-table td {
-      padding: 7px 10px;
+      padding: 8px 10px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      vertical-align: middle;
+    }
+    .backtest-table tr.interactive-row {
+      transition: background 0.15s ease;
+    }
+    .backtest-table tr.interactive-row:hover {
+      background: rgba(255, 255, 255, 0.04);
     }
     .prize-badge {
       display: inline-block;
-      padding: 2px 7px;
+      padding: 3px 8px;
       border-radius: 6px;
-      font-size: 0.73rem;
+      font-size: 0.74rem;
       font-weight: 600;
+      letter-spacing: 0.2px;
     }
     .prize-win {
-      background: rgba(245, 158, 11, 0.25);
+      background: rgba(245, 158, 11, 0.2);
       color: #fbbf24;
       border: 1px solid rgba(245, 158, 11, 0.4);
     }
     .prize-none {
-      color: #6b7280;
+      background: rgba(255, 255, 255, 0.04);
+      color: #9ca3af;
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .ai-card {
@@ -927,6 +937,19 @@
       background: linear-gradient(90deg, #ffffff, #fde68a);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .ziwei-title {
+      background: linear-gradient(90deg, #ffffff 0%, #d8b4fe 50%, #f472b6 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+    }
+
+    .control-select option {
+      background-color: #121620;
+      color: #f3f4f6;
     }
 
     .ai-subtitle {
@@ -2084,6 +2107,9 @@
       <button class="btn btn-ai-nav" onclick="scrollToAiSection()">
         <span>🤖</span> AI 運籌預測
       </button>
+      <button class="btn btn-secondary" onclick="scrollToZiweiSection()" style="border-color: rgba(168, 85, 247, 0.4); color: #c4b5fd;">
+        <span>🔮</span> 紫微玄學選號
+      </button>
       <button class="btn btn-verify-nav" onclick="scrollToVerificationSection()">
         <span>🛡️</span> 權威神準驗證
       </button>
@@ -2347,6 +2373,100 @@
       </div>
     </section>
 
+    <!-- 🔮 紫微八字玄學運籌專區 -->
+    <section class="ai-card ziwei-card" id="ziweiSection" style="border-color: rgba(168, 85, 247, 0.4); margin-top: 28px;">
+      <div class="ai-card-header">
+        <div class="ai-title-wrap">
+          <div class="ai-robot-badge" style="background: linear-gradient(135deg, #a855f7, #ec4899); box-shadow: 0 4px 18px rgba(168, 85, 247, 0.4);">🔮</div>
+          <div>
+            <div class="ai-title ziwei-title">紫微八字玄學 · CP-SAT 雙引擎選號</div>
+            <div class="ai-subtitle">結合個人生辰八字、流日天干地支五行喜用神與紫微偏財星曜加權，進行運籌學包牌求解</div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" onclick="loadTodayZiweiWebSeed()">
+            <span>⚡</span> 載入今日吉時氣場
+          </button>
+        </div>
+      </div>
+
+      <div class="ai-body-grid">
+        <!-- 左側：生辰設定控制面板 -->
+        <div class="ai-controls-panel">
+          <div class="panel-section-title">
+            <span>🔮 紫微生辰設定 (Metaphysics Input)</span>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label" for="webZiweiYear">出生西元年份 (如 1995)</label>
+            <input type="number" id="webZiweiYear" class="control-input" value="1995" min="1900" max="2026">
+          </div>
+
+          <div class="control-group" style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+              <label class="control-label" for="webZiweiMonth">出生月份</label>
+              <select id="webZiweiMonth" class="control-select">
+                <option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option>
+                <option value="4">4 月</option><option value="5">5 月</option><option value="6" selected>6 月</option>
+                <option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option>
+                <option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
+              </select>
+            </div>
+            <div style="flex: 1;">
+              <label class="control-label" for="webZiweiDay">出生日期</label>
+              <select id="webZiweiDay" class="control-select">
+                <option value="1">1 日</option><option value="2">2 日</option><option value="3">3 日</option>
+                <option value="4">4 日</option><option value="5">5 日</option><option value="6">6 日</option>
+                <option value="7">7 日</option><option value="8">8 日</option><option value="9">9 日</option>
+                <option value="10">10 日</option><option value="11">11 日</option><option value="12">12 日</option>
+                <option value="13">13 日</option><option value="14">14 日</option><option value="15" selected>15 日</option>
+                <option value="16">16 日</option><option value="17">17 日</option><option value="18">18 日</option>
+                <option value="19">19 日</option><option value="20">20 日</option><option value="21">21 日</option>
+                <option value="22">22 日</option><option value="23">23 日</option><option value="24">24 日</option>
+                <option value="25">25 日</option><option value="26">26 日</option><option value="27">27 日</option>
+                <option value="28">28 日</option><option value="29">29 日</option><option value="30">30 日</option>
+                <option value="31">31 日</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label" for="webZiweiHour">出生時辰 (地支十二時辰)</label>
+            <select id="webZiweiHour" class="control-select">
+              <option value="0">00:00-01:00 (子時)</option>
+              <option value="1">01:00-03:00 (丑時)</option>
+              <option value="2">03:00-05:00 (寅時)</option>
+              <option value="3">05:00-07:00 (卯時)</option>
+              <option value="4">07:00-09:00 (辰時)</option>
+              <option value="5">09:00-11:00 (巳時)</option>
+              <option value="6" selected>11:00-13:00 (午時)</option>
+              <option value="7">13:00-15:00 (未時)</option>
+              <option value="8">15:00-17:00 (申時)</option>
+              <option value="9">17:00-19:00 (酉時)</option>
+              <option value="10">19:00-21:00 (戌時)</option>
+              <option value="11">21:00-23:00 (亥時)</option>
+            </select>
+          </div>
+
+          <button class="btn-ai-solve" style="background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); margin-top: 12px;" onclick="triggerZiweiPredict(event)">
+            <span class="btn-solve-icon">🔮</span>
+            <span class="btn-solve-text">融合紫微吉數生成包牌</span>
+          </button>
+        </div>
+
+        <!-- 右側：命理速報與號碼卡片 -->
+        <div class="ai-results-panel">
+          <div id="webZiweiFortuneCard" class="portfolio-strategy-banner" style="background: rgba(168, 85, 247, 0.12); border-color: rgba(168, 85, 247, 0.35); padding: 16px; margin-bottom: 16px; display: block;">
+            <div id="webZiweiCardTitle" style="font-weight: 700; color: #c4b5fd; font-size: 1.05rem; margin-bottom: 6px;">🌌 個人紫微命理與氣場速報</div>
+            <div id="webZiweiSummaryText" style="color: var(--text-main); font-size: 0.9rem;">請輸入生辰並點擊【🔮 融合紫微吉數生成包牌】開始分析個人氣場與 CP-SAT 包牌...</div>
+            <div id="webZiweiBallsBox" style="display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap;"></div>
+          </div>
+
+          <div id="webZiweiResultsContainer" class="tickets-container"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- 🛡️ 權威科學驗證與回測實驗室 (AI Backtest & Cryptographic Verification Lab) -->
     <section class="ai-card verification-card" id="verificationSection">
       <div class="ai-card-header">
@@ -2459,13 +2579,17 @@
 
           <!-- 回測對照表容器 -->
           <div class="backtest-table-container" id="backtestTableWrap" style="display: none;">
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.03); padding: 9px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); line-height: 1.5;">
+              <span style="font-size: 1.1rem;">💡</span>
+              <span><strong>指標說明</strong>：每期由 AI 與隨機快選各模擬購買 5 注號碼。「獎項標籤」為 5 注中<strong>單張最佳獎項</strong>；「累計中球」為當期 5 注加總命中第一區之<strong>總球數</strong>。<strong>點擊任意列可展開查看該期 5 注詳細號碼與命中狀況</strong>。</span>
+            </div>
             <table class="backtest-table">
               <thead>
                 <tr>
-                  <th>期別 / 日期</th>
-                  <th>實際開獎 (6+1)</th>
-                  <th>AI 最佳戰績</th>
-                  <th>隨機快選戰績</th>
+                  <th style="width: 20%;">期別 / 日期</th>
+                  <th style="width: 26%;">實際開獎 (6+1)</th>
+                  <th style="width: 27%;">AI 戰績 (單注最佳 / 5注累計)</th>
+                  <th style="width: 27%;">隨機快選 (單注最佳 / 5注累計)</th>
                 </tr>
               </thead>
               <tbody id="backtestTableBody">
@@ -2630,6 +2754,134 @@
       const wStr = weekdayNames[target.getDay()];
 
       return `${year}-${month}-${date} (${wStr}) ${drawTimeStr}`;
+    }
+
+    function scrollToAiSection() {
+      const el = document.getElementById('aiSection');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function scrollToZiweiSection() {
+      const el = document.getElementById('ziweiSection');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function scrollToVerificationSection() {
+      const el = document.getElementById('verificationSection');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function scrollToCalendar() {
+      const el = document.getElementById('calendarSection');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function loadTodayZiweiWebSeed() {
+      const now = new Date();
+      document.getElementById('webZiweiYear').value = now.getFullYear();
+      document.getElementById('webZiweiMonth').value = now.getMonth() + 1;
+      document.getElementById('webZiweiDay').value = now.getDate();
+      const hourIdx = Math.floor(((now.getHours() + 1) % 24) / 2);
+      document.getElementById('webZiweiHour').value = hourIdx;
+      showToast('⚡ 已為您自動載入今日日期與當前時辰！');
+    }
+
+    async function triggerZiweiPredict(e) {
+      const year = parseInt(document.getElementById('webZiweiYear').value) || new Date().getFullYear();
+      const month = parseInt(document.getElementById('webZiweiMonth').value) || 1;
+      const day = parseInt(document.getElementById('webZiweiDay').value) || 1;
+      const hourIdx = parseInt(document.getElementById('webZiweiHour').value) || 6;
+      const hour = (hourIdx * 2 + 1) % 24;
+
+      const btn = e ? (e.target.closest('button') || e.target) : null;
+      if (btn) btn.disabled = true;
+
+      try {
+        const resp = await fetch('/api/ziwei_recommend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            birth_year: year,
+            birth_month: month,
+            birth_day: day,
+            birth_hour: hour,
+            game: currentGame,
+            count: 5
+          })
+        });
+        const data = await resp.json();
+        if (data.status === 'ok') {
+          renderZiweiWebResults(data.fortune, data.tickets);
+          showToast('🔮 紫微斗數與 CP-SAT 雙引擎運算完成！');
+        } else {
+          showToast('❌ 紫微計算失敗：' + (data.message || '未知錯誤'));
+        }
+      } catch (err) {
+        showToast('❌ 連線伺服器失敗: ' + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function renderZiweiWebResults(fortune, tickets) {
+      const meta = GAME_META[currentGame] || GAME_META['super_lotto'];
+      const gameName = fortune.game_name || meta.name || '威力彩';
+
+      const cardTitle = document.getElementById('webZiweiCardTitle');
+      if (cardTitle) {
+        cardTitle.innerHTML = `🌌 個人紫微命理與氣場速報 <span style="font-size:0.88rem; color:#fde68a; margin-left:8px; background:rgba(245,158,11,0.2); padding:2px 8px; border-radius:6px; border:1px solid rgba(245,158,11,0.4);">[${gameName}]</span>`;
+      }
+
+      const summaryEl = document.getElementById('webZiweiSummaryText');
+      if (summaryEl) {
+        summaryEl.innerHTML = `【<strong>${fortune.year_ganzhi || ''}年</strong> 生辰】五行喜用：<span style="color: #fbbf24; font-weight:700;">【${fortune.favorable_element || ''}】</span> | ${fortune.summary_text || ''}`;
+      }
+
+      const ballsBox = document.getElementById('webZiweiBallsBox');
+      if (ballsBox) {
+        ballsBox.innerHTML = `<span style="font-weight:700; color:#fbbf24;">🔮 專屬偏財吉數 [${gameName}]：</span>`;
+        (fortune.lucky_numbers_z1 || []).slice(0, 6).forEach(n => {
+          ballsBox.innerHTML += `<div class="ai-ball" style="background: linear-gradient(135deg, #a855f7, #6366f1);">${String(n).padStart(2, '0')}</div>`;
+        });
+        if (fortune.lucky_numbers_z2 && fortune.lucky_numbers_z2.length > 0) {
+          ballsBox.innerHTML += '<span style="color:#9ca3af; font-weight:bold;">+</span>';
+          fortune.lucky_numbers_z2.forEach(n => {
+            ballsBox.innerHTML += `<div class="ai-ball" style="background: linear-gradient(135deg, #ef4444, #dc2626);">${String(n).padStart(2, '0')}</div>`;
+          });
+        }
+      }
+
+      const container = document.getElementById('webZiweiResultsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      const ziweiLuckySet = new Set(fortune.lucky_numbers_z1 || []);
+
+      (tickets || []).forEach((t, idx) => {
+        let ballsHtml = '';
+        (t.zone1 || []).forEach(n => {
+          const isHit = ziweiLuckySet.has(n);
+          const style = isHit ? 'background: linear-gradient(135deg, #fbbf24, #d97706); box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);' : 'background: linear-gradient(135deg, #3b82f6, #1d4ed8);';
+          ballsHtml += `<div class="ai-ball" style="${style}">${String(n).padStart(2, '0')}</div>`;
+        });
+
+        if (t.zone2 !== null && t.zone2 !== undefined) {
+          ballsHtml += '<span style="color:#9ca3af; font-weight:bold;">+</span>';
+          ballsHtml += `<div class="ai-ball" style="background: linear-gradient(135deg, #ef4444, #dc2626);">${String(t.zone2).padStart(2, '0')}</div>`;
+        }
+
+        const reasonsHtml = (t.reasons || []).map(r => `<span class="reason-pill">${r}</span>`).join(' ');
+
+        container.innerHTML += `
+          <div class="ticket-card" style="border-left: 4px solid #a855f7; margin-bottom: 12px; padding: 14px; background: rgba(22, 27, 38, 0.75); border-radius: 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+              <div style="font-weight:700; color:#e9d5ff;">第 ${t.ticket_no || idx + 1} 注 · ${t.strategy || '紫微加權運籌'}</div>
+              <div class="ticket-score-badge" style="background: rgba(168, 85, 247, 0.2); color: #c4b5fd; border-color: rgba(168, 85, 247, 0.4);">分數: ${t.score || 90} 分</div>
+            </div>
+            <div class="ticket-balls-wrap" style="display:flex; gap:6px; align-items:center;">${ballsHtml}</div>
+            <div class="ticket-reasons-wrap" style="margin-top:6px;">${reasonsHtml}</div>
+          </div>
+        `;
+      });
     }
 
     const GAME_META = {
@@ -3456,25 +3708,131 @@
         return;
       }
 
-      logs.forEach(item => {
+      logs.forEach((item, idx) => {
         const tr = document.createElement('tr');
+        tr.className = 'interactive-row';
+        tr.style.cursor = 'pointer';
+        tr.title = '點擊展開/收合當期 5 注明細';
+        tr.onclick = () => toggleBacktestDetail(idx);
+
         const z1Str = (item.actual_z1 || []).map(n => (n < 10 ? '0' + n : n)).join(' ');
         const z2Str = item.actual_z2 < 10 ? '0' + item.actual_z2 : item.actual_z2;
 
-        const aiWon = item.ai_best_prize && !item.ai_best_prize.includes('未中獎') && !item.ai_best_prize.includes('0+0');
-        const randWon = item.rand_best_prize && !item.rand_best_prize.includes('未中獎') && !item.rand_best_prize.includes('0+0');
+        const aiWon = item.ai_is_win !== undefined 
+          ? item.ai_is_win 
+          : (item.ai_best_prize && !item.ai_best_prize.includes('未中獎') && !item.ai_best_prize.includes('0+0') && !item.ai_best_prize.includes('+0'));
+        const randWon = item.rand_is_win !== undefined 
+          ? item.rand_is_win 
+          : (item.rand_best_prize && !item.rand_best_prize.includes('未中獎') && !item.rand_best_prize.includes('0+0') && !item.rand_best_prize.includes('+0'));
 
-        const aiBadge = `<span class="prize-badge ${aiWon ? 'prize-win' : 'prize-none'}">${item.ai_best_prize} (中${item.ai_hit_count}球)</span>`;
-        const randBadge = `<span class="prize-badge ${randWon ? 'prize-win' : 'prize-none'}">${item.rand_best_prize} (中${item.rand_hit_count}球)</span>`;
+        const tCount = item.tickets_count || (item.ai_tickets ? item.ai_tickets.length : 5);
+
+        const aiTitle = aiWon ? `🏆 ${item.ai_best_prize}` : `未中獎 (${item.ai_best_prize})`;
+        const randTitle = randWon ? `🏆 ${item.rand_best_prize}` : `未中獎 (${item.rand_best_prize})`;
+
+        const aiBadge = `
+          <div style="display: flex; flex-direction: column; gap: 3px;">
+            <span class="prize-badge ${aiWon ? 'prize-win' : 'prize-none'}">${aiTitle}</span>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">
+              ${tCount}注累計中 <strong style="color: ${aiWon ? '#fbbf24' : '#93c5fd'}; font-weight: 600;">${item.ai_hit_count}</strong> 球
+            </div>
+          </div>
+        `;
+        const randBadge = `
+          <div style="display: flex; flex-direction: column; gap: 3px;">
+            <span class="prize-badge ${randWon ? 'prize-win' : 'prize-none'}">${randTitle}</span>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">
+              ${tCount}注累計中 <strong style="color: ${randWon ? '#fbbf24' : '#9ca3af'}; font-weight: 600;">${item.rand_hit_count}</strong> 球
+            </div>
+          </div>
+        `;
 
         tr.innerHTML = `
-          <td><strong>第 ${item.period} 期</strong><div style="font-size: 0.72rem; color: var(--text-muted);">${item.date}</div></td>
+          <td>
+            <strong>第 ${item.period} 期</strong>
+            <div style="font-size: 0.72rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+              <span>${item.date}</span>
+              <span id="btArrow_${idx}" style="font-size: 0.68rem; color: #fbbf24;">▼ 明細</span>
+            </div>
+          </td>
           <td><span style="color: #fbbf24; font-weight: 600;">[${z1Str}]</span> + <span style="color: #ef4444; font-weight: 700;">${z2Str}</span></td>
           <td>${aiBadge}</td>
           <td>${randBadge}</td>
         `;
         tbody.appendChild(tr);
+
+        // 展開的明細列
+        const detailTr = document.createElement('tr');
+        detailTr.id = `btDetail_${idx}`;
+        detailTr.style.display = 'none';
+        detailTr.style.background = 'rgba(0, 0, 0, 0.22)';
+
+        // 渲染 5 注號碼清單
+        const renderTicketList = (tickets) => {
+          if (!tickets || tickets.length === 0) return '<div style="color: var(--text-muted); font-size: 0.75rem;">無注單紀錄</div>';
+          return tickets.map((t, tIdx) => {
+            const z1Balls = (t.ticket || []).map(num => {
+              const numStr = num < 10 ? '0' + num : num;
+              const isHit = (item.actual_z1 || []).includes(num);
+              return isHit 
+                ? `<span style="display: inline-block; padding: 1px 5px; margin: 1px; border-radius: 4px; background: rgba(245, 158, 11, 0.35); color: #fbbf24; font-weight: 700; border: 1px solid rgba(245, 158, 11, 0.5);">${numStr}</span>`
+                : `<span style="display: inline-block; padding: 1px 4px; margin: 1px; color: #9ca3af;">${numStr}</span>`;
+            }).join(' ');
+
+            const z2Str = t.zone2 < 10 ? '0' + t.zone2 : t.zone2;
+            const z2Hit = (t.zone2 === item.actual_z2);
+            const z2Ball = z2Hit
+              ? `<span style="display: inline-block; padding: 1px 5px; margin: 1px; border-radius: 4px; background: rgba(239, 68, 68, 0.35); color: #f87171; font-weight: 700; border: 1px solid rgba(239, 68, 68, 0.5);">${z2Str}</span>`
+              : `<span style="display: inline-block; padding: 1px 4px; margin: 1px; color: #6b7280;">${z2Str}</span>`;
+
+            const isWinTier = t.prize && t.prize !== '未中獎';
+            const prizeBadge = isWinTier
+              ? `<span style="color: #fbbf24; font-weight: 600; font-size: 0.72rem; padding: 1px 5px; background: rgba(245, 158, 11, 0.2); border-radius: 4px;">🏆 ${t.prize} (${t.z1_matches}+${t.z2_match ? 1 : 0})</span>`
+              : `<span style="color: #6b7280; font-size: 0.72rem;">中 ${t.z1_matches}+${t.z2_match ? 1 : 0}</span>`;
+
+            return `
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 0; border-bottom: 1px dashed rgba(255,255,255,0.05); font-size: 0.78rem;">
+                <span style="color: var(--text-muted); font-size: 0.72rem; min-width: 32px;">注 ${tIdx + 1}:</span>
+                <span style="font-family: monospace;">[${z1Balls}] + ${z2Ball}</span>
+                <span>${prizeBadge}</span>
+              </div>
+            `;
+          }).join('');
+        };
+
+        detailTr.innerHTML = `
+          <td colspan="4" style="padding: 12px 16px; border-top: 1px solid rgba(245, 158, 11, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div style="background: rgba(255, 255, 255, 0.02); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                <div style="font-weight: 600; font-size: 0.8rem; color: #fbbf24; margin-bottom: 6px; display: flex; justify-content: space-between;">
+                  <span>🤖 AI 推薦 ${tCount} 注明細</span>
+                  <span style="font-size: 0.72rem; color: var(--text-muted);">共中 ${item.ai_hit_count} 顆一般號</span>
+                </div>
+                ${renderTicketList(item.ai_tickets)}
+              </div>
+              <div style="background: rgba(255, 255, 255, 0.02); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                <div style="font-weight: 600; font-size: 0.8rem; color: #9ca3af; margin-bottom: 6px; display: flex; justify-content: space-between;">
+                  <span>🎲 隨機快選 ${tCount} 注明細</span>
+                  <span style="font-size: 0.72rem; color: var(--text-muted);">共中 ${item.rand_hit_count} 顆一般號</span>
+                </div>
+                ${renderTicketList(item.rand_tickets)}
+              </div>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(detailTr);
       });
+    }
+
+    function toggleBacktestDetail(idx) {
+      const el = document.getElementById(`btDetail_${idx}`);
+      const arrow = document.getElementById(`btArrow_${idx}`);
+      if (!el) return;
+      const isOpen = el.style.display !== 'none';
+      el.style.display = isOpen ? 'none' : 'table-row';
+      if (arrow) {
+        arrow.innerText = isOpen ? '▼ 明細' : '▲ 收合';
+      }
     }
 
     function scrollToVerificationSection() {

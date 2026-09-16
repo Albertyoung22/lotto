@@ -365,6 +365,11 @@ class TaiwanLottoApp(tk.Tk):
         self.notebook.add(self.tab_calendar, text="  📅 本週開獎行事曆 (週一~週日)  ")
         self.build_calendar_tab()
 
+        # 頁籤 5: 🔮 紫微八字玄學運籌
+        self.tab_ziwei = tk.Frame(self.notebook, bg=COLOR_BG)
+        self.notebook.add(self.tab_ziwei, text="  🔮 紫微八字玄學運籌  ")
+        self.build_ziwei_tab()
+
     def create_top_bar(self):
         top_bar = tk.Frame(self, bg=COLOR_HEADER, padx=16, pady=6)
         top_bar.pack(side="top", fill="x")
@@ -1544,6 +1549,224 @@ class TaiwanLottoApp(tk.Tk):
             messagebox.showinfo("下載成功", f"{year} 年度官方開獎總表已下載並解壓縮至：\n{os.path.abspath('./downloads/' + str(year))}")
         else:
             messagebox.showerror("下載失敗", f"無法下載 {year} 年度 ZIP 壓縮檔，請稍候重試。")
+
+    # ==========================================
+    # 頁籤 5: 🔮 紫微八字玄學運籌佈局與控制
+    # ==========================================
+    def build_ziwei_tab(self):
+        ziwei_main = tk.Frame(self.tab_ziwei, bg=COLOR_BG, padx=8, pady=8)
+        ziwei_main.pack(fill="both", expand=True)
+
+        # 左側面板：生辰八字與氣場選擇
+        left_ctrl = tk.Frame(ziwei_main, bg=COLOR_CARD, width=340, padx=16, pady=16, highlightbackground=COLOR_BORDER, highlightthickness=1)
+        left_ctrl.pack(side="left", fill="y", padx=(0, 12))
+        left_ctrl.pack_propagate(False)
+
+        tk.Label(left_ctrl, text="🔮 紫微八字生辰設定", font=("Microsoft JhengHei UI", 12, "bold"), bg=COLOR_CARD, fg=COLOR_GOLD).pack(anchor="w", pady=(0, 10))
+
+        tk.Label(left_ctrl, text="出生西元年份 (如 1995):", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_TEXT).pack(anchor="w")
+        self.entry_ziwei_year = ttk.Entry(left_ctrl)
+        self.entry_ziwei_year.insert(0, str(datetime.now().year - 30))
+        self.entry_ziwei_year.pack(fill="x", pady=(2, 6))
+
+        row_md = tk.Frame(left_ctrl, bg=COLOR_CARD)
+        row_md.pack(fill="x", pady=(2, 6))
+
+        tk.Label(row_md, text="月份:", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_TEXT).grid(row=0, column=0, sticky="w")
+        self.combo_ziwei_month = ttk.Combobox(row_md, values=[f"{m} 月" for m in range(1, 13)], width=6, state="readonly")
+        self.combo_ziwei_month.current(5)
+        self.combo_ziwei_month.grid(row=0, column=1, padx=(2, 10))
+
+        tk.Label(row_md, text="日期:", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_TEXT).grid(row=0, column=2, sticky="w")
+        self.combo_ziwei_day = ttk.Combobox(row_md, values=[f"{d} 日" for d in range(1, 32)], width=6, state="readonly")
+        self.combo_ziwei_day.current(14)
+        self.combo_ziwei_day.grid(row=0, column=3, padx=(2, 0))
+
+        tk.Label(left_ctrl, text="出生時辰 (地支十二時辰):", font=("Microsoft JhengHei UI", 9), bg=COLOR_CARD, fg=COLOR_TEXT).pack(anchor="w", pady=(4, 0))
+        hour_labels = [
+            "00:00-01:00 (子時)", "01:00-03:00 (丑時)", "03:00-05:00 (寅時)",
+            "05:00-07:00 (卯時)", "07:00-09:00 (辰時)", "09:00-11:00 (巳時)",
+            "11:00-13:00 (午時)", "13:00-15:00 (未時)", "15:00-17:00 (申時)",
+            "17:00-19:00 (酉時)", "19:00-21:00 (戌時)", "21:00-23:00 (亥時)"
+        ]
+        self.combo_ziwei_hour = ttk.Combobox(left_ctrl, values=hour_labels, state="readonly")
+        self.combo_ziwei_hour.current(6)
+        self.combo_ziwei_hour.pack(fill="x", pady=(2, 8))
+
+        row_gender = tk.Frame(left_ctrl, bg=COLOR_CARD)
+        row_gender.pack(fill="x", pady=(2, 8))
+        self.var_ziwei_gender = tk.StringVar(value="M")
+        tk.Radiobutton(row_gender, text="乾造 (男)", variable=self.var_ziwei_gender, value="M", bg=COLOR_CARD, fg=COLOR_TEXT, selectcolor=COLOR_HEADER, activebackground=COLOR_CARD, activeforeground=COLOR_TEXT).pack(side="left", padx=(0, 15))
+        tk.Radiobutton(row_gender, text="坤造 (女)", variable=self.var_ziwei_gender, value="F", bg=COLOR_CARD, fg=COLOR_TEXT, selectcolor=COLOR_HEADER, activebackground=COLOR_CARD, activeforeground=COLOR_TEXT).pack(side="left")
+
+        btn_today_seed = ttk.Button(left_ctrl, text="⚡ 一鍵載入今日吉時氣場", style="Secondary.TButton", command=self.on_load_today_ziwei_seed)
+        btn_today_seed.pack(fill="x", pady=(0, 10))
+
+        self.btn_run_ziwei = ttk.Button(left_ctrl, text="🔮 融合紫微吉數生成 AI 包牌", style="Primary.TButton", command=self.on_run_ziwei_prediction)
+        self.btn_run_ziwei.pack(fill="x", ipady=4, pady=(0, 10))
+
+        note_box = tk.Frame(left_ctrl, bg=COLOR_HEADER, padx=10, pady=10, relief="groove")
+        note_box.pack(fill="x", side="bottom")
+        tk.Label(note_box, text="💡 玄學與 CP-SAT 運籌備註", font=("Microsoft JhengHei UI", 9, "bold"), bg=COLOR_HEADER, fg=COLOR_GOLD).pack(anchor="w")
+        tk.Label(note_box, text="紫微斗數提供個人喜用五行與偏財吉數加權；CP-SAT 求解器負責排除無效組合與包牌覆蓋率。", font=("Microsoft JhengHei UI", 8), bg=COLOR_HEADER, fg=COLOR_MUTED, wraplength=290, justify="left").pack(anchor="w", pady=(4, 0))
+
+        # 右側面板：命理速報與號碼卡片
+        right_panel = tk.Frame(ziwei_main, bg=COLOR_BG)
+        right_panel.pack(side="left", fill="both", expand=True)
+
+        self.fortune_card = tk.Frame(right_panel, bg=COLOR_CARD, padx=16, pady=12, highlightbackground=COLOR_BORDER, highlightthickness=1)
+        self.fortune_card.pack(fill="x", pady=(0, 10))
+
+        self.lbl_title_f = tk.Label(self.fortune_card, text="🌌 個人紫微命理與當前氣場速報", font=("Microsoft JhengHei UI", 12, "bold"), bg=COLOR_CARD, fg=COLOR_GOLD)
+        self.lbl_title_f.pack(anchor="w")
+
+        self.lbl_fortune_text = tk.Label(self.fortune_card, text="請點擊【🔮 融合紫微吉數生成 AI 包牌】開始分析...", font=("Microsoft JhengHei UI", 10), bg=COLOR_CARD, fg=COLOR_TEXT, justify="left", wraplength=700)
+        self.lbl_fortune_text.pack(anchor="w", pady=(6, 8))
+
+        self.ziwei_balls_box = tk.Frame(self.fortune_card, bg=COLOR_CARD)
+        self.ziwei_balls_box.pack(anchor="w", pady=(4, 0))
+
+        self.ziwei_results_frame = tk.Frame(right_panel, bg=COLOR_BG)
+        self.ziwei_results_frame.pack(fill="both", expand=True)
+
+        self.lbl_ziwei_results_title = tk.Label(self.ziwei_results_frame, text="🎯 紫微+CP-SAT 雙引擎包牌組合", font=("Microsoft JhengHei UI", 11, "bold"), bg=COLOR_BG, fg=COLOR_TEXT)
+        self.lbl_ziwei_results_title.pack(anchor="w", pady=(0, 4))
+
+        z_canvas_frame = tk.Frame(self.ziwei_results_frame, bg=COLOR_BG)
+        z_canvas_frame.pack(fill="both", expand=True)
+
+        self.ziwei_canvas = tk.Canvas(z_canvas_frame, bg=COLOR_BG, highlightthickness=0)
+        self.ziwei_scrollbar = ttk.Scrollbar(z_canvas_frame, orient="vertical", command=self.ziwei_canvas.yview)
+        self.ziwei_scrollable_frame = tk.Frame(self.ziwei_canvas, bg=COLOR_BG)
+
+        self.ziwei_scrollable_frame.bind("<Configure>", lambda e: self.ziwei_canvas.configure(scrollregion=self.ziwei_canvas.bbox("all")))
+        self.ziwei_canvas_window = self.ziwei_canvas.create_window((0, 0), window=self.ziwei_scrollable_frame, anchor="nw")
+        self.ziwei_canvas.configure(yscrollcommand=self.ziwei_scrollbar.set)
+        self.ziwei_canvas.bind('<Configure>', lambda e: self.ziwei_canvas.itemconfig(self.ziwei_canvas_window, width=e.width))
+
+        def _on_ziwei_mousewheel(event):
+            self.ziwei_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        self.ziwei_canvas.bind("<Enter>", lambda e: self.ziwei_canvas.bind_all("<MouseWheel>", _on_ziwei_mousewheel))
+        self.ziwei_canvas.bind("<Leave>", lambda e: self.ziwei_canvas.unbind_all("<MouseWheel>"))
+
+        self.ziwei_canvas.pack(side="left", fill="both", expand=True)
+        self.ziwei_scrollbar.pack(side="right", fill="y")
+
+    def on_load_today_ziwei_seed(self):
+        """將生辰快速切換為今日日期與當前時辰"""
+        now = datetime.now()
+        self.entry_ziwei_year.delete(0, "end")
+        self.entry_ziwei_year.insert(0, str(now.year))
+        self.combo_ziwei_month.current(now.month - 1)
+        self.combo_ziwei_day.current(now.day - 1)
+        hour_idx = ((now.hour + 1) % 24) // 2
+        self.combo_ziwei_hour.current(hour_idx)
+
+    def on_run_ziwei_prediction(self):
+        """執行紫微斗數計算與 CP-SAT 融合運籌求解"""
+        try:
+            b_year = int(self.entry_ziwei_year.get().strip())
+        except Exception:
+            b_year = datetime.now().year
+
+        b_month = self.combo_ziwei_month.current() + 1
+        b_day = self.combo_ziwei_day.current() + 1
+        h_idx = self.combo_ziwei_hour.current()
+        b_hour = (h_idx * 2 + 1) % 24
+
+        import lotto_ziwei_engine
+        fortune = lotto_ziwei_engine.calculate_ziwei_lotto_fortune(
+            birth_year=b_year,
+            birth_month=b_month,
+            birth_day=b_day,
+            birth_hour=b_hour,
+            game_type=self.current_game
+        )
+
+        g_name = fortune.get("game_name", "威力彩")
+        self.lbl_title_f.config(text=f"🌌 個人紫微命理與當前氣場速報 [{g_name}]")
+        self.lbl_ziwei_results_title.config(text=f"🎯 紫微+CP-SAT 雙引擎包牌組合 [{g_name}]")
+
+        summary = fortune["summary_text"]
+        self.lbl_fortune_text.config(
+            text=f"【{fortune['year_ganzhi']}年 / 生辰】五行喜用：【{fortune['favorable_element']}】  |  {summary}"
+        )
+
+        for w in self.ziwei_balls_box.winfo_children():
+            w.destroy()
+
+        tk.Label(self.ziwei_balls_box, text=f"🔮 紫微偏財專屬吉數 [{g_name}]：", font=("Microsoft JhengHei UI", 9, "bold"), bg=COLOR_CARD, fg=COLOR_GOLD).pack(side="left", padx=(0, 6))
+
+        for num in fortune["lucky_numbers_z1"][:6]:
+            ball = LottoBall(self.ziwei_balls_box, number=num, is_special=False, size=32, bg=COLOR_CARD)
+            ball.pack(side="left", padx=2)
+
+        if fortune["lucky_numbers_z2"]:
+            tk.Label(self.ziwei_balls_box, text="+", font=("Segoe UI", 12, "bold"), bg=COLOR_CARD, fg=COLOR_MUTED).pack(side="left", padx=4)
+            for z2_num in fortune["lucky_numbers_z2"]:
+                z2_ball = LottoBall(self.ziwei_balls_box, number=z2_num, is_special=True, size=32, bg=COLOR_CARD)
+                z2_ball.pack(side="left", padx=2)
+
+        if not self.analyzer and self.records:
+            from lotto_ai_optimizer import LottoAnalyzer
+            self.analyzer = LottoAnalyzer(self.records, game_type=self.current_game)
+
+        if not self.analyzer:
+            return
+
+        constraints = {
+            "ziwei_boost_map": fortune["boost_weights_z1"],
+            "ziwei_lucky_z1": fortune["lucky_numbers_z1"],
+            "sum_min": self.analyzer.default_sum_range[0],
+            "sum_max": self.analyzer.default_sum_range[1]
+        }
+
+        from lotto_ai_optimizer import LottoSolver
+        solver = LottoSolver(self.analyzer)
+        tickets = solver.solve_combinations(num_tickets=5, user_constraints=constraints)
+
+        self.render_ziwei_tickets(tickets, set(fortune["lucky_numbers_z1"]))
+
+    def render_ziwei_tickets(self, tickets, ziwei_lucky_set):
+        """渲染紫微融合注單結果卡片"""
+        for child in self.ziwei_scrollable_frame.winfo_children():
+            child.destroy()
+
+        for t in tickets:
+            card = tk.Frame(self.ziwei_scrollable_frame, bg=COLOR_CARD, padx=14, pady=10, highlightbackground=COLOR_BORDER, highlightthickness=1)
+            card.pack(fill="x", pady=4, padx=2)
+
+            top_row = tk.Frame(card, bg=COLOR_CARD)
+            top_row.pack(fill="x", pady=(0, 6))
+
+            t_no = t.get("ticket_no", 1)
+            strat_name = t.get("strategy", "紫微加權運籌")
+            score = t.get("score", 90)
+
+            tk.Label(top_row, text=f"第 {t_no} 注 · {strat_name}", font=("Microsoft JhengHei UI", 11, "bold"), bg=COLOR_CARD, fg=COLOR_GOLD).pack(side="left")
+            tk.Label(top_row, text=f"綜合評分: {score} 分", font=("Microsoft JhengHei UI", 10, "bold"), bg=COLOR_CARD, fg=COLOR_TEAL).pack(side="right")
+
+            balls_row = tk.Frame(card, bg=COLOR_CARD)
+            balls_row.pack(anchor="w", pady=(2, 6))
+
+            z1_balls = t.get("zone1", [])
+            z2_val = t.get("zone2", None)
+
+            for num in z1_balls:
+                is_ziwei_hit = num in ziwei_lucky_set
+                ball = LottoBall(balls_row, number=num, is_special=is_ziwei_hit, size=38, bg=COLOR_CARD)
+                ball.pack(side="left", padx=2)
+
+            if z2_val is not None:
+                tk.Label(balls_row, text="+", font=("Segoe UI", 14, "bold"), bg=COLOR_CARD, fg=COLOR_MUTED).pack(side="left", padx=4)
+                z2_ball = LottoBall(balls_row, number=z2_val, is_special=True, size=38, bg=COLOR_CARD)
+                z2_ball.pack(side="left", padx=2)
+
+            reasons = t.get("reasons", [])
+            if reasons:
+                lbl_r = tk.Label(card, text=" | ".join(reasons), font=("Microsoft JhengHei UI", 8), bg=COLOR_CARD, fg=COLOR_MUTED)
+                lbl_r.pack(anchor="w")
 
     def open_web_dashboard(self):
         """一鍵自動清理舊伺服器、重啟背景 Web 伺服器並使用本機真實區網 IP (LAN IP) 開啟瀏覽器"""
